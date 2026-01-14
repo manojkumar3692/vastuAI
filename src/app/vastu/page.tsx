@@ -228,8 +228,9 @@ export default function VastuPage() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerCity, setCustomerCity] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fakeOrderId, setFakeOrderId] = useState<string | null>(null);
-  const [isRazorpayReady, setIsRazorpayReady] = useState(false);
+//   const [fakeOrderId, setFakeOrderId] = useState<string | null>(null);
+//   const [isRazorpayReady, setIsRazorpayReady] = useState(false);
+const [fakeOrderId, setFakeOrderId] = useState<string | null>(null); // now used for PhonePe merchantTransactionId
 
   // AI + PDF states
   const [isDetectingRooms, setIsDetectingRooms] = useState(false);
@@ -241,18 +242,73 @@ export default function VastuPage() {
     !(currentStep === "Upload Floor Plan" && !imageUrl) &&
     !(currentStep === "Verify Rooms" && rooms.length === 0);
 
-  // Load Razorpay script
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => setIsRazorpayReady(true);
-    script.onerror = () => console.error("Failed to load Razorpay script");
-    document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
+//   // Load Razorpay script
+//   useEffect(() => {
+//     const script = document.createElement("script");
+//     script.src = "https://checkout.razorpay.com/v1/checkout.js";
+//     script.async = true;
+//     script.onload = () => setIsRazorpayReady(true);
+//     script.onerror = () => console.error("Failed to load Razorpay script");
+//     document.body.appendChild(script);
+//     return () => {
+//       document.body.removeChild(script);
+//     };
+//   }, []);
+
+const handlePayWithPhonePe = async () => {
+    if (!customerName || !customerEmail) {
+      alert("Please enter at least your name and email.");
+      return;
+    }
+    if (!vastuSummary) {
+      alert("Please review the Vastu Summary before payment.");
+      return;
+    }
+  
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/payment/phonepe-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: 49900, // ₹499 in paise
+          customer: {
+            name: customerName,
+            email: customerEmail,
+            phone: customerPhone || undefined,
+          },
+          summary: vastuSummary, // optional – can be saved in backend later
+        }),
+      });
+  
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error("PhonePe init failed:", err);
+        alert("Unable to start PhonePe payment. Please try again.");
+        return;
+      }
+  
+      const data = await res.json();
+  
+      if (!data?.redirectUrl) {
+        alert("Payment system did not return a redirect URL.");
+        return;
+      }
+  
+      // Store tx id for display
+      if (data.merchantTransactionId) {
+        setFakeOrderId(data.merchantTransactionId);
+      }
+  
+      // 🔁 Redirect user to PhonePe pay page
+      window.location.href = data.redirectUrl;
+    } catch (err) {
+      console.error("PhonePe error:", err);
+      alert("Unable to start PhonePe payment. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const goNext = () => {
     if (currentStep === "Upload Floor Plan" && !imageUrl) return;
@@ -540,111 +596,111 @@ export default function VastuPage() {
   };
 
   // Razorpay payment
-  const handlePayWithRazorpay = async () => {
-    if (!customerName || !customerEmail) {
-      alert("Please enter at least your name and email.");
-      return;
-    }
-    if (!vastuSummary) {
-      alert("Please review the Vastu Summary before payment.");
-      return;
-    }
-    if (!window.Razorpay || !isRazorpayReady) {
-      alert("Payment system not ready yet. Please try again in a moment.");
-      return;
-    }
+//   const handlePayWithRazorpay = async () => {
+//     if (!customerName || !customerEmail) {
+//       alert("Please enter at least your name and email.");
+//       return;
+//     }
+//     if (!vastuSummary) {
+//       alert("Please review the Vastu Summary before payment.");
+//       return;
+//     }
+//     if (!window.Razorpay || !isRazorpayReady) {
+//       alert("Payment system not ready yet. Please try again in a moment.");
+//       return;
+//     }
 
-    setIsSubmitting(true);
-    try {
-      const orderRes = await fetch("/api/payment/razorpay-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: 100, currency: "INR" }),
-      });
+//     setIsSubmitting(true);
+//     try {
+//       const orderRes = await fetch("/api/payment/razorpay-order", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ amount: 100, currency: "INR" }),
+//       });
 
-      if (!orderRes.ok) {
-        throw new Error("Failed to create order");
-      }
+//       if (!orderRes.ok) {
+//         throw new Error("Failed to create order");
+//       }
 
-      const orderData = await orderRes.json();
-      const { orderId, amount, currency, keyId } = orderData;
+//       const orderData = await orderRes.json();
+//       const { orderId, amount, currency, keyId } = orderData;
 
-      setFakeOrderId(orderId);
+//       setFakeOrderId(orderId);
 
-      const options = {
-        key: keyId,
-        amount,
-        currency,
-        name: "Vastu Layout Report",
-        description: "AI-assisted Vastu analysis PDF report",
-        order_id: orderId,
-        prefill: {
-          name: customerName,
-          email: customerEmail,
-          contact: customerPhone || undefined,
-        },
-        notes: {
-          city: customerCity || "",
-        },
-        theme: {
-          color: "#4f46e5",
-        },
-        handler: async (response: any) => {
-          try {
-            const verifyRes = await fetch("/api/payment/verify", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                customer: {
-                  name: customerName,
-                  email: customerEmail,
-                  phone: customerPhone,
-                  city: customerCity,
-                },
-                summary: vastuSummary,
-              }),
-            });
+//       const options = {
+//         key: keyId,
+//         amount,
+//         currency,
+//         name: "Vastu Layout Report",
+//         description: "AI-assisted Vastu analysis PDF report",
+//         order_id: orderId,
+//         prefill: {
+//           name: customerName,
+//           email: customerEmail,
+//           contact: customerPhone || undefined,
+//         },
+//         notes: {
+//           city: customerCity || "",
+//         },
+//         theme: {
+//           color: "#4f46e5",
+//         },
+//         handler: async (response: any) => {
+//           try {
+//             const verifyRes = await fetch("/api/payment/verify", {
+//               method: "POST",
+//               headers: { "Content-Type": "application/json" },
+//               body: JSON.stringify({
+//                 razorpay_order_id: response.razorpay_order_id,
+//                 razorpay_payment_id: response.razorpay_payment_id,
+//                 razorpay_signature: response.razorpay_signature,
+//                 customer: {
+//                   name: customerName,
+//                   email: customerEmail,
+//                   phone: customerPhone,
+//                   city: customerCity,
+//                 },
+//                 summary: vastuSummary,
+//               }),
+//             });
 
-            const verifyJson = await verifyRes.json();
-            if (!verifyRes.ok || !verifyJson.success) {
-              console.error("Verify failed:", verifyJson);
-              alert(
-                "Payment captured but verification failed. Please contact support."
-              );
-              return;
-            }
+//             const verifyJson = await verifyRes.json();
+//             if (!verifyRes.ok || !verifyJson.success) {
+//               console.error("Verify failed:", verifyJson);
+//               alert(
+//                 "Payment captured but verification failed. Please contact support."
+//               );
+//               return;
+//             }
 
-            alert(
-              "Payment successful! Your report will be emailed once mailing is wired, and you can also download it from the Summary step."
-            );
-          } catch (err) {
-            console.error("Error verifying payment", err);
-            alert("Payment succeeded but verification error occurred.");
-          }
-        },
-        modal: {
-          ondismiss: () => {
-            console.log("Razorpay modal closed by user");
-          },
-        },
-      };
+//             alert(
+//               "Payment successful! Your report will be emailed once mailing is wired, and you can also download it from the Summary step."
+//             );
+//           } catch (err) {
+//             console.error("Error verifying payment", err);
+//             alert("Payment succeeded but verification error occurred.");
+//           }
+//         },
+//         modal: {
+//           ondismiss: () => {
+//             console.log("Razorpay modal closed by user");
+//           },
+//         },
+//       };
 
-      const rzp = new window.Razorpay(options);
-      rzp.on("payment.failed", (resp: any) => {
-        console.error("Payment failed:", resp.error);
-        alert("Payment failed. Please try again.");
-      });
-      rzp.open();
-    } catch (err) {
-      console.error(err);
-      alert("Unable to start payment. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+//       const rzp = new window.Razorpay(options);
+//       rzp.on("payment.failed", (resp: any) => {
+//         console.error("Payment failed:", resp.error);
+//         alert("Payment failed. Please try again.");
+//       });
+//       rzp.open();
+//     } catch (err) {
+//       console.error(err);
+//       alert("Unable to start payment. Please try again.");
+//     } finally {
+//       setIsSubmitting(false);
+//     }
+//   };
 
   // ---------- UI ----------
 
@@ -671,8 +727,8 @@ export default function VastuPage() {
             </div>
           </div>
           <div className="hidden text-[11px] text-emerald-300/90 sm:block">
-            🔒 Secure payments via Razorpay • AI-assisted, rule-based Vastu
-          </div>
+  🔒 Secure payments via PhonePe • AI-assisted, rule-based Vastu
+</div>
         </div>
       </header>
 
@@ -1509,32 +1565,30 @@ export default function VastuPage() {
                     </p>
 
                     {fakeOrderId && (
-                      <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-[10px] text-emerald-100">
-                        Razorpay Order ID:{" "}
-                        <span className="font-semibold">{fakeOrderId}</span>
-                      </div>
-                    )}
+  <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-[10px] text-emerald-100">
+    Transaction ID: <span className="font-semibold">{fakeOrderId}</span>
+  </div>
+)}
                   </div>
 
                   <div className="mt-auto">
-                    <button
-                      type="button"
-                      onClick={handlePayWithRazorpay}
-                      disabled={
-                        isSubmitting ||
-                        !customerName ||
-                        !customerEmail ||
-                        !isRazorpayReady
-                      }
-                      className="w-full rounded-lg bg-indigo-500 px-4 py-2 text-[11px] font-semibold text-white shadow-sm shadow-indigo-500/50 hover:bg-indigo-600 disabled:opacity-40"
-                    >
-                      {isSubmitting
-                        ? "Starting Razorpay..."
-                        : "Pay ₹499 securely with Razorpay"}
-                    </button>
-                    <p className="mt-1 text-center text-[10px] text-slate-500">
-                      Powered by Razorpay • Test mode keys currently in use.
-                    </p>
+                  <button
+  type="button"
+  onClick={handlePayWithPhonePe}
+  disabled={isSubmitting || !customerName || !customerEmail}
+  className="w-full rounded-lg bg-indigo-500 px-4 py-2 text-[11px] font-semibold text-white shadow-sm shadow-indigo-500/50 hover:bg-indigo-600 disabled:opacity-40"
+>
+  {isSubmitting
+    ? "Redirecting to PhonePe..."
+    : "Pay ₹499 securely with PhonePe UPI / Cards"}
+</button>
+<p className="mt-1 text-center text-[10px] text-slate-500">
+  You’ll be redirected to PhonePe’s secure payment page. After completing the
+  payment, return here to download / receive your report.
+</p>
+<p className="mt-1 text-center text-[10px] text-slate-500">
+  Powered by PhonePe • UPI / Cards / Wallets supported.
+</p>
                   </div>
                 </div>
               )}
