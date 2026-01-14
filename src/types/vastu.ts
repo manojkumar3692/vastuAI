@@ -10,17 +10,70 @@ export type Direction =
   | "W"
   | "NW";
 
-export type RoomType =
+  export type RoomType =
+  // Bedrooms
   | "master_bedroom"
   | "bedroom"
-  | "kitchen"
-  | "toilet"
+  | "kids_room"
+  | "guest_room"
+  // Core rooms
   | "living"
-  | "pooja"
+  | "kitchen"
   | "dining"
+  | "pooja"
+  // Bathrooms
+  | "toilet"
+  | "powder_room"
+  | "bathroom"
+  // Entrance / circulation
+  | "main_entrance"
+  | "foyer"
+  | "porch"
+  | "mud_room"
+  // Entertainment
+  | "media_room"
+  | "home_theater"
+  | "gaming_room"
+  | "music_room"
+  | "bar"
+  // Work / study
+  | "study"
+  | "home_office"
+  | "library"
+  // Outdoor
   | "balcony"
-  | "staircase"
+  | "terrace"
+  | "courtyard"
+  | "verandah"
+  | "sit_out"
+  | "deck"
+  | "garden"
+  | "gazebo"
+  | "pergola"
+  // Parking
+  | "parking"
+  | "garage"
+  // Personal / service / storage
+  | "dressing_room"
+  | "servant_room"
+  | "maid_room"
   | "store"
+  | "store_room"
+  | "shoe_closet"
+  // Structural
+  | "staircase"
+  | "basement"
+  // Utilities
+  | "utility"
+  | "laundry"
+  | "wash_area"
+  | "overhead_water_tank"
+  | "underground_water_tank"
+  | "electrical_room"
+  // Amenities
+  | "gym"
+  | "pool"
+  // Fallback
   | "other";
 
 export type RoomPoint = {

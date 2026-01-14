@@ -8,9 +8,11 @@ import React, {
   useState,
   useEffect,
 } from "react";
-import type { RoomPoint, RoomType } from "@/types/vastu";
 import { directionForPoint } from "@/lib/vastuGeometry";
 import { evaluateVastu, type VastuSummary } from "@/lib/vastuRules";
+import type { RoomPoint, RoomType } from "@/types/vastu";
+import { ROOM_TYPE_LABEL } from "@/lib/reportPdf";
+
 
 declare global {
   interface Window {
@@ -32,19 +34,156 @@ type CentrePoint = {
   y: number;
 };
 
-const ROOM_TYPE_OPTIONS: { value: RoomType; label: string }[] = [
-  { value: "master_bedroom", label: "Master Bedroom" },
-  { value: "bedroom", label: "Bedroom" },
-  { value: "living", label: "Living Room" },
-  { value: "kitchen", label: "Kitchen" },
-  { value: "toilet", label: "Toilet / Bath" },
-  { value: "dining", label: "Dining" },
-  { value: "pooja", label: "Pooja Room" },
-  { value: "balcony", label: "Balcony" },
-  { value: "staircase", label: "Staircase" },
-  { value: "store", label: "Store / Utility" },
-  { value: "other", label: "Other" },
-];
+export const ROOM_TYPE_OPTIONS: {
+    value: RoomType;
+    label: string;
+    group: string;
+  }[] = [
+    // Amenities
+    { value: "gym", label: ROOM_TYPE_LABEL.gym, group: "Amenities" },
+    { value: "pool", label: ROOM_TYPE_LABEL.pool, group: "Amenities" },
+  
+    // Bathrooms
+    { value: "toilet", label: ROOM_TYPE_LABEL.toilet, group: "Bathrooms" },
+    {
+      value: "powder_room",
+      label: ROOM_TYPE_LABEL.powder_room,
+      group: "Bathrooms",
+    },
+    { value: "bathroom", label: ROOM_TYPE_LABEL.bathroom, group: "Bathrooms" },
+  
+    // Bedrooms
+    {
+      value: "master_bedroom",
+      label: ROOM_TYPE_LABEL.master_bedroom,
+      group: "Bedrooms",
+    },
+    { value: "bedroom", label: ROOM_TYPE_LABEL.bedroom, group: "Bedrooms" },
+    { value: "kids_room", label: ROOM_TYPE_LABEL.kids_room, group: "Bedrooms" },
+    {
+      value: "guest_room",
+      label: ROOM_TYPE_LABEL.guest_room,
+      group: "Bedrooms",
+    },
+  
+    // Core rooms
+    { value: "kitchen", label: ROOM_TYPE_LABEL.kitchen, group: "Core Rooms" },
+    { value: "living", label: ROOM_TYPE_LABEL.living, group: "Core Rooms" },
+    { value: "dining", label: ROOM_TYPE_LABEL.dining, group: "Core Rooms" },
+    { value: "pooja", label: ROOM_TYPE_LABEL.pooja, group: "Core Rooms" },
+  
+    // Entertainment
+    {
+      value: "media_room",
+      label: ROOM_TYPE_LABEL.media_room,
+      group: "Entertainment",
+    },
+    {
+      value: "home_theater",
+      label: ROOM_TYPE_LABEL.home_theater,
+      group: "Entertainment",
+    },
+    {
+      value: "gaming_room",
+      label: ROOM_TYPE_LABEL.gaming_room,
+      group: "Entertainment",
+    },
+    {
+      value: "music_room",
+      label: ROOM_TYPE_LABEL.music_room,
+      group: "Entertainment",
+    },
+    { value: "bar", label: ROOM_TYPE_LABEL.bar, group: "Entertainment" },
+  
+    // Entrance
+    {
+      value: "main_entrance",
+      label: ROOM_TYPE_LABEL.main_entrance,
+      group: "Entrance",
+    },
+    { value: "foyer", label: ROOM_TYPE_LABEL.foyer, group: "Entrance" },
+    { value: "porch", label: ROOM_TYPE_LABEL.porch, group: "Entrance" },
+    { value: "mud_room", label: ROOM_TYPE_LABEL.mud_room, group: "Entrance" },
+  
+    // Outdoor
+    { value: "balcony", label: ROOM_TYPE_LABEL.balcony, group: "Outdoor" },
+    { value: "terrace", label: ROOM_TYPE_LABEL.terrace, group: "Outdoor" },
+    { value: "courtyard", label: ROOM_TYPE_LABEL.courtyard, group: "Outdoor" },
+    { value: "verandah", label: ROOM_TYPE_LABEL.verandah, group: "Outdoor" },
+    { value: "sit_out", label: ROOM_TYPE_LABEL.sit_out, group: "Outdoor" },
+    { value: "deck", label: ROOM_TYPE_LABEL.deck, group: "Outdoor" },
+    { value: "garden", label: ROOM_TYPE_LABEL.garden, group: "Outdoor" },
+    { value: "gazebo", label: ROOM_TYPE_LABEL.gazebo, group: "Outdoor" },
+    { value: "pergola", label: ROOM_TYPE_LABEL.pergola, group: "Outdoor" },
+  
+    // Parking
+    { value: "parking", label: ROOM_TYPE_LABEL.parking, group: "Parking" },
+    { value: "garage", label: ROOM_TYPE_LABEL.garage, group: "Parking" },
+  
+    // Personal spaces
+    {
+      value: "dressing_room",
+      label: ROOM_TYPE_LABEL.dressing_room,
+      group: "Personal Spaces",
+    },
+  
+    // Service areas
+    {
+      value: "servant_room",
+      label: ROOM_TYPE_LABEL.servant_room,
+      group: "Service Areas",
+    },
+    {
+      value: "maid_room",
+      label: ROOM_TYPE_LABEL.maid_room,
+      group: "Service Areas",
+    },
+  
+    // Storage
+    { value: "store_room", label: ROOM_TYPE_LABEL.store_room, group: "Storage" },
+    { value: "shoe_closet", label: ROOM_TYPE_LABEL.shoe_closet, group: "Storage" },
+    { value: "store", label: ROOM_TYPE_LABEL.store, group: "Storage" },
+  
+    // Structural
+    {
+      value: "staircase",
+      label: ROOM_TYPE_LABEL.staircase,
+      group: "Structural",
+    },
+    { value: "basement", label: ROOM_TYPE_LABEL.basement, group: "Structural" },
+  
+    // Utilities
+    { value: "utility", label: ROOM_TYPE_LABEL.utility, group: "Utilities" },
+    { value: "laundry", label: ROOM_TYPE_LABEL.laundry, group: "Utilities" },
+    { value: "wash_area", label: ROOM_TYPE_LABEL.wash_area, group: "Utilities" },
+    {
+      value: "overhead_water_tank",
+      label: ROOM_TYPE_LABEL.overhead_water_tank,
+      group: "Utilities",
+    },
+    {
+      value: "underground_water_tank",
+      label: ROOM_TYPE_LABEL.underground_water_tank,
+      group: "Utilities",
+    },
+    {
+      value: "electrical_room",
+      label: ROOM_TYPE_LABEL.electrical_room,
+      group: "Utilities",
+    },
+  
+    // Work spaces
+    { value: "study", label: ROOM_TYPE_LABEL.study, group: "Work Spaces" },
+    {
+      value: "home_office",
+      label: ROOM_TYPE_LABEL.home_office,
+      group: "Work Spaces",
+    },
+    { value: "library", label: ROOM_TYPE_LABEL.library, group: "Work Spaces" },
+  
+    // Fallback
+    { value: "other", label: ROOM_TYPE_LABEL.other, group: "Other" },
+  ];
 
 type DetectRoomsApiResponse = {
   rooms: {
@@ -289,6 +428,38 @@ export default function VastuPage() {
     return evaluateVastu(withDirections);
   }, [imageUrl, rooms, centre, rotationDeg]);
 
+  const FREE_ROOMS_COUNT = 3;
+
+  const badRoomsCount = useMemo(() => {
+    if (!vastuSummary) return 0;
+    return vastuSummary.rooms.filter(
+      (r) => r.verdict === "Unfavourable" || r.verdict === "Critical"
+    ).length;
+  }, [vastuSummary]);
+
+  const visibleRooms = useMemo(
+    () => (vastuSummary ? vastuSummary.rooms.slice(0, FREE_ROOMS_COUNT) : []),
+    [vastuSummary]
+  );
+
+  const lockedRooms = useMemo(
+    () => (vastuSummary ? vastuSummary.rooms.slice(FREE_ROOMS_COUNT) : []),
+    [vastuSummary]
+  );
+
+  const imbalanceCopy = useMemo(() => {
+    if (!badRoomsCount) {
+      return "Good overall balance. The detailed report still helps you optimise placements and enhance positive zones.";
+    }
+    if (badRoomsCount === 1) {
+      return "A single weak zone can still disturb energy flow over time. Simple, non-demolition corrections are usually enough to fix it.";
+    }
+    if (badRoomsCount <= 3) {
+      return "Multiple rooms are sitting in weaker Vastu zones. A structured remedy plan helps you prioritise what to fix first.";
+    }
+    return "Several rooms fall in unfavourable zones. A full Vastu blueprint with room-wise corrections is strongly recommended.";
+  }, [badRoomsCount]);
+
   // AI: detect rooms from image
   const handleAutoDetectRooms = async () => {
     if (!planImageDataUrl) {
@@ -388,7 +559,7 @@ export default function VastuPage() {
       const orderRes = await fetch("/api/payment/razorpay-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: 49900, currency: "INR" }),
+        body: JSON.stringify({ amount: 100, currency: "INR" }),
       });
 
       if (!orderRes.ok) {
@@ -988,23 +1159,19 @@ export default function VastuPage() {
                           placeholder="Room name (e.g., Master Bedroom)"
                           className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         />
-                        <select
-                          value={room.type}
-                          onChange={(e) =>
-                            updateRoomType(room.id, e.target.value as RoomType)
-                          }
-                          className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        >
-                          {ROOM_TYPE_OPTIONS.map((opt) => (
-                            <option
-                              key={opt.value}
-                              value={opt.value}
-                              className="bg-slate-900"
-                            >
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
+<select
+  value={room.type}
+  onChange={(e) =>
+    updateRoomType(room.id, e.target.value as RoomType)
+  }
+  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+>
+  {ROOM_TYPE_OPTIONS.map((opt) => (
+    <option key={opt.value} value={opt.value} className="bg-slate-900">
+      {opt.label}
+    </option>
+  ))}
+</select>
                         <div className="mt-1 text-[10px] text-slate-500">
                           Position: x {(room.x * 100).toFixed(0)}%, y{" "}
                           {(room.y * 100).toFixed(0)}%
@@ -1015,6 +1182,7 @@ export default function VastuPage() {
                 </div>
               )}
 
+              {/* Vastu Summary */}
               {/* Vastu Summary */}
               {currentStep === "Vastu Summary" && (
                 <>
@@ -1030,6 +1198,7 @@ export default function VastuPage() {
                     </p>
                   ) : (
                     <div className="flex h-full flex-col gap-3">
+                      {/* Overall score card */}
                       <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5">
                         <div className="text-[11px] font-semibold text-emerald-200">
                           Overall Vastu Score
@@ -1047,69 +1216,230 @@ export default function VastuPage() {
                         </div>
                       </div>
 
-                      <div className="flex-1 overflow-auto pr-1">
-                        <div className="mb-1 grid grid-cols-[1.3fr,0.6fr,0.9fr] gap-x-2 text-[10px] font-semibold text-slate-300">
-                          <div>Room</div>
-                          <div>Direction</div>
-                          <div>Vastu Verdict</div>
+                      {/* Imbalance highlight (emotional hook) */}
+                      <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/90 text-[10px] font-bold text-slate-900">
+                            !
+                          </span>
+                          <div className="text-[11px] font-semibold text-amber-100">
+                            {badRoomsCount === 0
+                              ? "No major Vastu issues detected."
+                              : badRoomsCount === 1
+                              ? "1 room is in a weak Vastu zone."
+                              : `${badRoomsCount} rooms are in weak Vastu zones.`}
+                          </div>
                         </div>
-                        <div className="max-h-64 space-y-1 overflow-auto">
-                          {vastuSummary.rooms.map((r) => {
-                            const verdictColor =
-                              r.verdict === "Auspicious"
-                                ? "text-emerald-300"
-                                : r.verdict === "Favourable"
-                                ? "text-emerald-200"
-                                : r.verdict === "Average"
-                                ? "text-slate-200"
-                                : r.verdict === "Unfavourable"
-                                ? "text-amber-200"
-                                : "text-red-300";
-
-                            return (
-                              <div
-                                key={r.id}
-                                className="grid grid-cols-[1.3fr,0.6fr,0.9fr] gap-x-2 gap-y-0.5 rounded-md border border-slate-800 bg-slate-950/60 px-2 py-1.5 text-[10px]"
-                              >
-                                <div>
-                                  <div className="font-semibold text-slate-100">
-                                    {r.name}
-                                  </div>
-                                  <div className="text-[9px] capitalize text-slate-400">
-                                    {r.type.replace("_", " ")}
-                                  </div>
-                                </div>
-                                <div className="text-slate-200">
-                                  {r.direction}
-                                </div>
-                                <div className={verdictColor}>
-                                  {r.verdict}
-                                  {r.notes && (
-                                    <div className="mt-0.5 text-[9px] text-slate-400">
-                                      {r.notes}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                        <p className="mt-1 text-[10px] text-amber-100/90">
+                          {imbalanceCopy}
+                        </p>
                       </div>
 
-                      <div>
+                      {/* Free 3-room preview */}
+{/* Free 3-room preview – premium cards */}
+<div className="rounded-2xl border border-indigo-500/40 bg-slate-950/80 px-3 py-3 shadow-sm shadow-indigo-900/50">
+  {/* Header / trust row */}
+  <div className="flex items-center justify-between gap-2">
+    <div className="space-y-0.5">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-300">
+        Free preview
+      </div>
+      <div className="text-[12px] font-semibold text-slate-50">
+        First {visibleRooms.length} rooms fully unlocked
+      </div>
+      <p className="text-[10px] text-slate-400">
+        See how our engine reads your layout before you decide to unlock the
+        complete Vastu blueprint.
+      </p>
+    </div>
+
+    <div className="flex flex-col items-end gap-1">
+      <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[9px] font-medium text-emerald-200 ring-1 ring-emerald-500/40">
+        ✅ Verified by VastuSense AI
+      </span>
+      {lockedRooms.length > 0 && (
+        <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[9px] text-slate-400">
+          {lockedRooms.length} more rooms in full report
+        </span>
+      )}
+    </div>
+  </div>
+
+  {/* Cards */}
+  <div className="mt-3 space-y-2">
+    {visibleRooms.map((r, index) => {
+      const verdictTone =
+        r.verdict === "Auspicious" || r.verdict === "Favourable"
+          ? "text-emerald-300"
+          : r.verdict === "Average"
+          ? "text-amber-200"
+          : "text-red-300";
+
+      const accentBar =
+        r.verdict === "Auspicious" || r.verdict === "Favourable"
+          ? "from-emerald-400 to-emerald-600"
+          : r.verdict === "Average"
+          ? "from-amber-400 to-amber-600"
+          : "from-rose-500 to-red-700";
+
+      return (
+        <div
+          key={r.id}
+          className="relative overflow-hidden rounded-xl border border-slate-800 bg-gradient-to-br from-slate-950 to-slate-900 px-3 py-2.5 text-[10px] shadow-sm shadow-slate-950/60"
+        >
+          {/* Accent bar */}
+          <div
+            className={
+              "absolute inset-y-0 left-0 w-1 bg-gradient-to-b " + accentBar
+            }
+          />
+
+          {/* Top row: room + chips */}
+          <div className="flex items-start justify-between gap-2 pl-2">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-slate-50">
+                  {r.name}
+                </span>
+                <span className="rounded-full bg-slate-800/80 px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] text-slate-400">
+                  Room {index + 1}
+                </span>
+              </div>
+              <div className="text-[9px] text-slate-400">
+  {ROOM_TYPE_LABEL[r.type]}
+</div>
+            </div>
+
+            <div className="flex flex-col items-end gap-1">
+              <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[9px] font-medium text-slate-200">
+                Direction:{" "}
+                <span className="font-semibold text-slate-50">
+                  {r.direction}
+                </span>
+              </span>
+              <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-[9px] font-medium text-indigo-200">
+                Free insight
+              </span>
+            </div>
+          </div>
+
+          {/* Verdict + notes */}
+          <div className="mt-2 flex items-center justify-between gap-2 pl-2">
+            <div className={verdictTone + " text-[11px] font-semibold"}>
+              {r.verdict}
+            </div>
+            {r.notes && (
+              <div className="max-w-xs text-right text-[9px] text-slate-400">
+                {r.notes}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+
+  {/* Footer micro-copy */}
+  <p className="mt-3 text-[10px] text-slate-500">
+    These first rooms give you a feel for the depth of analysis. The full
+    report adds{" "}
+    <span className="font-semibold text-slate-200">
+      room-wise priorities, corrections and a sharable PDF
+    </span>{" "}
+    for your architect or family.
+  </p>
+</div>
+
+                      {/* Blurred full breakdown (locked) */}
+                      {lockedRooms.length > 0 && (
+                        <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-950/80 px-3 py-2.5">
+                          <div className="mb-1 text-[10px] font-semibold text-slate-300">
+                            Complete room-by-room breakdown
+                          </div>
+
+                          <div className="space-y-1 opacity-80">
+                            {lockedRooms.map((r) => {
+                              const verdictColor =
+                                r.verdict === "Auspicious"
+                                  ? "text-emerald-300"
+                                  : r.verdict === "Favourable"
+                                  ? "text-emerald-200"
+                                  : r.verdict === "Average"
+                                  ? "text-slate-200"
+                                  : r.verdict === "Unfavourable"
+                                  ? "text-amber-200"
+                                  : "text-red-300";
+
+                              return (
+                                <div
+                                  key={r.id}
+                                  className="grid grid-cols-[1.3fr,0.6fr,0.9fr] gap-x-2 gap-y-0.5 rounded-md border border-slate-900 bg-slate-950 px-2 py-1.5 text-[10px]"
+                                >
+                                  <div>
+                                    <div className="font-semibold text-slate-100">
+                                      {r.name}
+                                    </div>
+                                    <div className="text-[9px] capitalize text-slate-500">
+                                      {r.type.replace("_", " ")}
+                                    </div>
+                                  </div>
+                                  <div className="text-slate-300">
+                                    {r.direction}
+                                  </div>
+                                  <div className={verdictColor}>
+                                    {r.verdict}
+                                    {r.notes && (
+                                      <div className="mt-0.5 text-[9px] text-slate-500">
+                                        {r.notes}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Blur overlay + locked label */}
+                          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-slate-950/60 backdrop-blur-sm">
+                            <div className="rounded-full bg-slate-900/95 px-3 py-1 text-[10px] font-semibold text-slate-100 shadow-sm shadow-black/60">
+                              🔒 Full Vastu blueprint locked
+                            </div>
+                            <p className="mt-1 max-w-xs text-center text-[10px] text-slate-400">
+                              Unlock to view exact verdicts, notes and
+                              room-wise remedies for all{" "}
+                              {vastuSummary.rooms.length} rooms.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* CTA + sample PDF */}
+                      <div className="mt-auto space-y-2">
+                        <button
+                          type="button"
+                          onClick={goNext}
+                          className="w-full rounded-lg bg-indigo-500 px-4 py-2 text-[11px] font-semibold text-white shadow-sm shadow-indigo-500/50 hover:bg-indigo-600"
+                        >
+                          Unlock full Vastu report (₹499)
+                        </button>
+                        <p className="text-center text-[10px] text-slate-500">
+                          Get room-by-room remedies, priorities and a
+                          downloadable PDF delivered to your email.
+                        </p>
+
                         <button
                           type="button"
                           onClick={handleDownloadPdf}
                           disabled={isDownloading}
-                          className="w-full rounded-lg bg-slate-50 px-4 py-2 text-[11px] font-semibold text-slate-900 shadow-sm shadow-slate-50/50 hover:bg-white disabled:opacity-40"
+                          className="w-full rounded-lg border border-slate-600 bg-slate-950 px-4 py-2 text-[11px] font-semibold text-slate-100 shadow-sm shadow-slate-900/40 hover:bg-slate-900 disabled:opacity-40"
                         >
                           {isDownloading
-                            ? "Generating PDF..."
-                            : "Download Sample Vastu Report (PDF)"}
+                            ? "Preparing sample PDF..."
+                            : "Preview sample Vastu report (PDF)"}
                         </button>
                         <p className="mt-1 text-[10px] text-slate-500">
-                          After payment, the same report will also be generated
-                          on the server and emailed with your details.
+                          Sample shows the structure of the report. The full
+                          paid report will use your exact layout and details.
                         </p>
                       </div>
                     </div>

@@ -8,6 +8,95 @@ export type Verdict =
   | "Unfavourable"
   | "Critical";
 
+  type BaseRoomType =
+  | "master_bedroom"
+  | "bedroom"
+  | "kitchen"
+  | "toilet"
+  | "living"
+  | "pooja"
+  | "dining"
+  | "balcony"
+  | "staircase"
+  | "store"
+  | "other";
+
+function normalizeRoomType(type: RoomType): BaseRoomType {
+  switch (type) {
+    // bedrooms
+    case "master_bedroom":
+      return "master_bedroom";
+    case "bedroom":
+    case "kids_room":
+    case "guest_room":
+    case "dressing_room":
+      return "bedroom";
+
+    // bathrooms
+    case "toilet":
+    case "powder_room":
+    case "bathroom":
+      return "toilet";
+
+    // core rooms
+    case "kitchen":
+      return "kitchen";
+    case "living":
+    case "media_room":
+    case "home_theater":
+    case "gaming_room":
+    case "music_room":
+    case "bar":
+      return "living";
+    case "dining":
+      return "dining";
+    case "pooja":
+      return "pooja";
+
+    // outdoor → balcony bucket
+    case "balcony":
+    case "terrace":
+    case "courtyard":
+    case "verandah":
+    case "sit_out":
+    case "deck":
+    case "garden":
+    case "gazebo":
+    case "pergola":
+      return "balcony";
+
+    // structural / service / utility etc -> treat like neutral “store”
+    case "staircase":
+    case "basement":
+    case "store":
+    case "store_room":
+    case "shoe_closet":
+    case "utility":
+    case "laundry":
+    case "wash_area":
+    case "overhead_water_tank":
+    case "underground_water_tank":
+    case "electrical_room":
+    case "servant_room":
+    case "maid_room":
+    case "parking":
+    case "garage":
+    case "gym":
+    case "pool":
+    case "main_entrance":
+    case "foyer":
+    case "porch":
+    case "mud_room":
+    case "study":
+    case "home_office":
+    case "library":
+      return "store";
+
+    default:
+      return "other";
+  }
+}
+
 export type RoomDirectionInput = {
   id: string;
   name: string;
@@ -211,23 +300,25 @@ function scoreGeneric(_direction: Direction): RoomScoreEval {
 }
 
 function scoreRoom(type: RoomType, direction: Direction): RoomScoreEval {
-  switch (type) {
-    case "kitchen":
-      return scoreKitchen(direction);
-    case "master_bedroom":
-      return scoreMasterBedroom(direction);
-    case "bedroom":
-      return scoreBedroom(direction);
-    case "toilet":
-      return scoreToilet(direction);
-    case "pooja":
-      return scorePooja(direction);
-    case "living":
-      return scoreLiving(direction);
-    default:
-      return scoreGeneric(direction);
+    const baseType = normalizeRoomType(type);
+  
+    switch (baseType) {
+      case "kitchen":
+        return scoreKitchen(direction);
+      case "master_bedroom":
+        return scoreMasterBedroom(direction);
+      case "bedroom":
+        return scoreBedroom(direction);
+      case "toilet":
+        return scoreToilet(direction);
+      case "pooja":
+        return scorePooja(direction);
+      case "living":
+        return scoreLiving(direction);
+      default:
+        return scoreGeneric(direction);
+    }
   }
-}
 
 export function evaluateVastu(rooms: RoomDirectionInput[]): VastuSummary {
   const results: RoomVastuResult[] = rooms.map((r) => {

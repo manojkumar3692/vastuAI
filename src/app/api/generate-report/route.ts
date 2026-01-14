@@ -23,7 +23,10 @@ export async function POST(req: NextRequest) {
 
     const uint8 = await buildVastuReportPdf(summary, customerName);
 
-    return new NextResponse(uint8, {
+    // ✅ Convert Uint8Array → Buffer so TypeScript is happy
+    const pdfBuffer = Buffer.from(uint8);
+
+    return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
