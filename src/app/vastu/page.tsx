@@ -1601,7 +1601,7 @@ const handlePayWithPhonePe = async () => {
                   </p>
                   <p className="text-[10px] text-slate-500">
                     Your plan is processed in memory for this session only.
-                    Payment is handled via Razorpay on secure servers.
+                    Payment is handled via Phonepay on secure servers.
                   </p>
                 </div>
               )}
