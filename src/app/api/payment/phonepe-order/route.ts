@@ -1,75 +1,127 @@
+// src/app/api/payment/phonepe-order/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import qs from "querystring";
+import crypto from "crypto";
 
-const BASE_URL = process.env.PHONEPE_BASE_URL!;
-const CLIENT_ID = process.env.PHONEPE_CLIENT_ID!;
-const CLIENT_VERSION = process.env.PHONEPE_CLIENT_VERSION!;
-const CLIENT_SECRET = process.env.PHONEPE_CLIENT_SECRET!;
-const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID!;
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!;
+const PHONEPE_BASE_URL = process.env.PHONEPE_BASE_URL!;
+const PHONEPE_MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID!;
+const PHONEPE_SALT_KEY = process.env.PHONEPE_SALT_KEY!;
+const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX || "1";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://tropicglow.in";
 
-// Step 1: Get OAuth token
-async function getAccessToken() {
-  const url = `${BASE_URL}/apis/identity-manager/v1/oauth/token`;
-  const body = qs.stringify({
-    client_id: CLIENT_ID,
-    client_version: CLIENT_VERSION,
-    client_secret: CLIENT_SECRET,
-    grant_type: "client_credentials",
-  });
+export const runtime = "nodejs";
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-  });
-
-  if (!res.ok) throw new Error("PhonePe token fetch failed");
-
-  return res.json();
-}
-
-// POST /api/payment/phonepe-order
 export async function POST(req: NextRequest) {
   try {
-    const { amount } = await req.json();  // amount in paise (e.g. 49900)
-
-    const tokenResponse = await getAccessToken();
-
-    const paymentPayload = {
-      merchantId: MERCHANT_ID,
-      transactionId: "TXN-" + Date.now(),
-      amount: amount,
-      merchantUserId: "customer-" + Date.now(),
-      redirectUrl: `${SITE_URL}/payment-success`,
-      callbackUrl: `${SITE_URL}/payment-success`,
-      paymentInstrument: { type: "PAY_PAGE" },
-    };
-
-    const res = await fetch(
-      `${BASE_URL}/apis/hermes/pg/v1/pay`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `${tokenResponse.token_type} ${tokenResponse.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(paymentPayload),
-      }
-    );
-
-    const json = await res.json();
-    if (json.code !== "PAYMENT_INITIATED") {
-      console.error("PhonePe error", json);
-      return NextResponse.json({ error: "PhonePe payment failed", details: json }, { status: 400 });
+    if (!PHONEPE_BASE_URL || !PHONEPE_MERCHANT_ID || !PHONEPE_SALT_KEY) {
+      console.error("[phonepe-order] Missing env", {
+        PHONEPE_BASE_URL: !!PHONEPE_BASE_URL,
+        PHONEPE_MERCHANT_ID: !!PHONEPE_MERCHANT_ID,
+        PHONEPE_SALT_KEY: !!PHONEPE_SALT_KEY,
+      });
+      return NextResponse.json(
+        { error: "PhonePe env not configured" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({
-      redirectUrl: json.data.redirectUrl,
+    const body = await req.json();
+    const { amount, customer } = body || {};
+
+    if (!amount || !customer?.name || !customer?.email) {
+      return NextResponse.json(
+        { error: "Invalid payload: amount / customer missing" },
+        { status: 400 }
+      );
+    }
+
+    // 👇 amount must be in paise. 499 rupees = 49900
+    const amountInPaise = Number(amount); // assume you already send paise
+
+    const merchantTransactionId = `TG${Date.now()}`;
+
+    const payLoad = {
+      merchantId: PHONEPE_MERCHANT_ID,
+      merchantTransactionId,
+      amount: amountInPaise,
+      redirectUrl: `${SITE_URL}/payment/phonepe-return?tx=${merchantTransactionId}`,
+      redirectMode: "REDIRECT",
+      callbackUrl: `${SITE_URL}/payment/phonepe-return?tx=${merchantTransactionId}`,
+      mobileNumber: customer.phone || "",
+      paymentInstrument: {
+        type: "PAY_PAGE",
+      },
+    };
+
+    const payloadStr = JSON.stringify(payLoad);
+    const base64Payload = Buffer.from(payloadStr).toString("base64");
+
+    const apiPath = "/pg/v1/pay";
+    const stringToSign = base64Payload + apiPath + PHONEPE_SALT_KEY;
+    const sha256 = crypto.createHash("sha256").update(stringToSign).digest("hex");
+    const checksum = `${sha256}###${PHONEPE_SALT_INDEX}`;
+
+    const phonepeRes = await fetch(`${PHONEPE_BASE_URL}${apiPath}`, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "Content-Type": "application/json",
+        "X-VERIFY": checksum,
+        "X-MERCHANT-ID": PHONEPE_MERCHANT_ID,
+      },
+      body: JSON.stringify({ request: base64Payload }),
     });
 
+    // Try to parse JSON; if fails, capture raw text
+    const rawText = await phonepeRes.text();
+    let phonepeJson: any = null;
+    try {
+      phonepeJson = rawText ? JSON.parse(rawText) : null;
+    } catch {
+      phonepeJson = { raw: rawText };
+    }
+
+    if (!phonepeRes.ok || phonepeJson?.success === false) {
+      console.error("[phonepe-order] PhonePe error", {
+        status: phonepeRes.status,
+        body: phonepeJson,
+      });
+
+      // 🔴 IMPORTANT: send details back so you can see it in Postman
+      return NextResponse.json(
+        {
+          error: "Failed to create payment",
+          phonepeStatus: phonepeRes.status,
+          phonepeBody: phonepeJson,
+        },
+        { status: 500 }
+      );
+    }
+
+    const redirectUrl =
+      phonepeJson?.data?.instrumentResponse?.redirectInfo?.url ||
+      phonepeJson?.data?.redirectUrl;
+
+    if (!redirectUrl) {
+      console.error("[phonepe-order] No redirectUrl in response", phonepeJson);
+      return NextResponse.json(
+        { error: "Missing redirect URL from PhonePe", phonepeBody: phonepeJson },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        redirectUrl,
+        merchantTransactionId,
+      },
+      { status: 200 }
+    );
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Failed to create payment" }, { status: 500 });
+    console.error("[phonepe-order] Handler error", err);
+    return NextResponse.json(
+      { error: "Failed to create payment (exception)" },
+      { status: 500 }
+    );
   }
 }

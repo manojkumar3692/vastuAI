@@ -6,7 +6,7 @@ export default function HomePage() {
         href="/vastu"
         className="px-6 py-3 rounded-lg bg-indigo-600 text-white font-semibold shadow-md hover:bg-indigo-700"
       >
-        Go to Vastu Calculator
+        Vastu Using AI !
       </a>
     </main>
   );
