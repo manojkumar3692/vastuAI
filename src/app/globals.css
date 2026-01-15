@@ -30,3 +30,13 @@ body {
 .font-display {
   font-family: var(--font-playfair);
 }
+
+html {
+  font-size: 17px;   /* 🔥 Default 16 → now 17 */
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 18px; /* 💻 Desktop slightly bigger */
+  }
+}
