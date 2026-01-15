@@ -271,13 +271,13 @@ const handlePayWithPhonePe = async () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: 49900, // ₹499 in paise
+          amount: 100, // ₹499 in paise
           customer: {
             name: customerName,
             email: customerEmail,
             phone: customerPhone || undefined,
           },
-          summary: vastuSummary, // optional – can be saved in backend later
+          summary: vastuSummary, // optional – for server-side logging later
         }),
       });
   
@@ -295,12 +295,10 @@ const handlePayWithPhonePe = async () => {
         return;
       }
   
-      // Store tx id for display
       if (data.merchantTransactionId) {
         setFakeOrderId(data.merchantTransactionId);
       }
   
-      // 🔁 Redirect user to PhonePe pay page
       window.location.href = data.redirectUrl;
     } catch (err) {
       console.error("PhonePe error:", err);
