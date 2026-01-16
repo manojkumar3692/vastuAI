@@ -18,6 +18,9 @@ export const metadata: Metadata = {
     "vastu for plots",
     "AI vastu report",
     "VastuCheck.in",
+    "vastu check by floor plan",
+    "vastu for 2BHK flat",
+    "vastu for 3BHK flat",
   ],
   openGraph: {
     title: "VastuCheck.in – Online Vastu Check for Your Home Floor Plan",
@@ -78,6 +81,25 @@ export default function HomePage() {
     ],
   };
 
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: "VastuCheck – Online Vastu Report from Floor Plan",
+    description:
+      "Upload your house or flat floor plan and get an AI-assisted Vastu report based on traditional Vastu rules, with direction-wise score, room-wise verdicts and practical non-demolition remedies.",
+    brand: {
+      "@type": "Brand",
+      name: "VastuCheck.in",
+    },
+    offers: {
+      "@type": "Offer",
+      price: "49",
+      priceCurrency: "INR",
+      availability: "https://schema.org/InStock",
+      url: "https://vastucheck.in/vastu",
+    },
+  };
+
   return (
     <main className="min-h-screen bg-amber-50 text-slate-800">
       {/* soft background aura */}
@@ -88,6 +110,13 @@ export default function HomePage() {
         type="application/ld+json"
         suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
+       {/* Product JSON-LD for SEO */}
+       <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
       />
 
       <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-10 pt-6 sm:px-6 lg:px-8">
