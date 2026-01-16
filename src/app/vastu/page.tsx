@@ -851,14 +851,15 @@ export default function VastuPage() {
 
                         {/* Rooms overlay */}
                         {currentStep === "Verify Rooms" && (
-                          <div
-                            ref={roomsOverlayRef}
-                            className="absolute inset-0 z-30"
-                            onPointerDown={handleRoomsBackgroundPointerDown}
-                            onPointerMove={handleRoomsPointerMove}
-                            onPointerUp={stopDraggingRoom}
-                            onPointerLeave={stopDraggingRoom}
-                          >
+                         <div
+                         ref={roomsOverlayRef}
+                         className="absolute inset-0 z-30 touch-none"
+                         onPointerDown={handleRoomsBackgroundPointerDown}
+                         onPointerMove={handleRoomsPointerMove}
+                         onPointerUp={stopDraggingRoom}
+                         onPointerLeave={stopDraggingRoom}
+                         onPointerCancel={stopDraggingRoom}
+                       >
                             <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded-full bg-[#2b1b10]/90 px-3 py-1 text-[10px] text-amber-50 shadow">
                               Tap to add rooms · drag the coloured dots
                             </div>
@@ -879,30 +880,24 @@ export default function VastuPage() {
                                     transform: "translate(-50%, -50%)",
                                   }}
                                 >
-                                  <div
-                                    className={[
-                                      "h-4 w-4 cursor-pointer rounded-full border-2 shadow-sm shadow-amber-900/40",
-                                      room.type === "toilet"
-                                        ? "border-rose-400 bg-rose-200/90"
-                                        : room.type === "kitchen"
-                                        ? "border-amber-400 bg-amber-200/90"
-                                        : "border-emerald-400 bg-emerald-200/90",
-                                    ].join(" ")}
-                                    onPointerDown={(e) => {
-                                      e.stopPropagation();
-                                      setDraggingRoomId(room.id);
-                                      (
-                                        e.currentTarget as HTMLElement
-                                      ).setPointerCapture(e.pointerId);
-                                    }}
-                                    onPointerUp={(e) => {
-                                      e.stopPropagation();
-                                      setDraggingRoomId(null);
-                                      (
-                                        e.currentTarget as HTMLElement
-                                      ).releasePointerCapture(e.pointerId);
-                                    }}
-                                  />
+<div
+  className={[
+    "h-4 w-4 cursor-pointer rounded-full border-2 shadow-sm shadow-amber-900/40",
+    room.type === "toilet"
+      ? "border-rose-400 bg-rose-200/90"
+      : room.type === "kitchen"
+      ? "border-amber-400 bg-amber-200/90"
+      : "border-emerald-400 bg-emerald-200/90",
+  ].join(" ")}
+  onPointerDown={(e) => {
+    e.stopPropagation();
+    setDraggingRoomId(room.id);
+  }}
+  onPointerUp={(e) => {
+    e.stopPropagation();
+    setDraggingRoomId(null);
+  }}
+/>
                                   <div className="mt-1 rounded-full bg-[#2b1b10]/90 px-2 py-0.5 text-[9px] text-amber-50 shadow">
                                     {room.name || label}
                                   </div>
