@@ -25,7 +25,20 @@ export async function POST(req: NextRequest) {
 
     const bytes = await buildVastuReportPdf(summary, customerName, customerCity);
 
-    return new NextResponse(bytes, {
+    // ✅ Always normalize to Uint8Array
+    const uint8 =
+      bytes instanceof Uint8Array
+        ? bytes
+        : new Uint8Array(bytes as ArrayBufferLike);
+
+    // ✅ Get a clean ArrayBuffer (no SharedArrayBuffer in the type)
+    const pdfArrayBuffer = uint8.buffer.slice(
+      uint8.byteOffset,
+      uint8.byteOffset + uint8.byteLength,
+    ) as ArrayBuffer;
+
+    // ✅ Use native Response, cast body as any to satisfy TS
+    return new Response(pdfArrayBuffer as any, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

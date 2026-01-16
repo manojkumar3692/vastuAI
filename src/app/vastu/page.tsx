@@ -459,7 +459,7 @@ export default function VastuPage() {
     return evaluateVastu(withDirections);
   }, [imageUrl, rooms, centre, rotationDeg]);
 
-  const FREE_ROOMS_COUNT = 3;
+  const FREE_ROOMS_COUNT = 2;
 
   const badRoomsCount = useMemo(() => {
     if (!vastuSummary) return 0;
@@ -1279,57 +1279,6 @@ export default function VastuPage() {
                         </p>
                       </div>
 
-                      {/* Locked breakdown */}
-                      {lockedRooms.length > 0 && (
-                        <div className="relative overflow-hidden rounded-xl border border-amber-100 bg-white px-3 py-2.5">
-                          <div className="mb-1 text-[10px] font-semibold text-[#2b1b10]">
-                            Complete room-by-room breakdown
-                          </div>
-
-                          <div className="space-y-1 opacity-80">
-                            {lockedRooms.map((r) => {
-                              const verdictColor =
-                                r.verdict === "Auspicious"
-                                  ? "text-emerald-800"
-                                  : r.verdict === "Favourable"
-                                  ? "text-emerald-700"
-                                  : r.verdict === "Average"
-                                  ? "text-[#3f3a34]"
-                                  : r.verdict === "Unfavourable"
-                                  ? "text-amber-800"
-                                  : "text-rose-700";
-
-                              return (
-                                <div
-                                  key={r.id}
-                                  className="grid grid-cols-[1.3fr,0.6fr,0.9fr] gap-x-2 gap-y-0.5 rounded-md border border-amber-50 bg-[#fdf7ee] px-2 py-1.5 text-[10px]"
-                                >
-                                  <div>
-                                    <div className="font-semibold text-[#2b1b10]">
-                                      {r.name}
-                                    </div>
-                                    <div className="text-[9px] capitalize text-[#a58b6e]">
-                                      {r.type.replace("_", " ")}
-                                    </div>
-                                  </div>
-                                  <div className="text-[#5f4630]">
-                                    {r.direction}
-                                  </div>
-                                  <div className={verdictColor}>
-                                    {r.verdict}
-                                    {r.notes && (
-                                      <div className="mt-0.5 text-[9px] text-[#a58b6e]">
-                                        {r.notes}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
                       {/* FULL REPORT OFFER SECTION */}
                       <section className="mt-4 rounded-3xl border border-amber-100 bg-white/95 shadow-md shadow-amber-100/70">
                         <div className="grid gap-4 md:grid-cols-[1.7fr,1.3fr] md:items-center">
@@ -1521,7 +1470,7 @@ export default function VastuPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-[13px] font-bold text-amber-700">
-                          ₹ 499
+                          ₹ 49
                         </div>
                         <div className="text-[9px] text-[#8b7357]">
                           One-time · per layout
@@ -1583,11 +1532,10 @@ export default function VastuPage() {
                     >
                       {isSubmitting
                         ? "Processing…"
-                        : "Pay ₹499 securely with PhonePe (test mode)"}
+                        : "Pay 49 securely with Razorpay"}
                     </button>
                     <p className="mt-1 text-center text-[10px] text-[#a58b6e]">
-                      You will be redirected to PhonePe’s secure UPI / card /
-                      wallet page when live.
+                      You will be redirected to PhonePe’s secure UPI / card / Net Banking
                     </p>
                   </div>
                 </div>
