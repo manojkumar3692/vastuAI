@@ -10,7 +10,85 @@ import { Verdict } from "./vastuRules";
  *  - pull the right static chunks from here
  *  - stitch + personalise per layout
  */
-
+export const ROOM_TYPE_LABEL: Record<RoomType, string> = {
+    // Bedrooms
+    master_bedroom: "Master Bedroom",
+    bedroom: "Bedroom",
+    kids_room: "Kids Room",
+    guest_room: "Guest Room",
+  
+    // Core rooms
+    living: "Living Room",
+    kitchen: "Kitchen",
+    dining: "Dining Room",
+    pooja: "Pooja Room",
+  
+    // Bathrooms
+    toilet: "Toilet / Bath",
+    powder_room: "Powder Room",
+    bathroom: "Bathroom",
+  
+    // Entrance / circulation
+    main_entrance: "Main Entrance",
+    foyer: "Foyer / Lobby",
+    porch: "Porch",
+    mud_room: "Mud Room",
+  
+    // Entertainment
+    media_room: "Media Room",
+    home_theater: "Home Theater",
+    gaming_room: "Gaming Room",
+    music_room: "Music Room",
+    bar: "Bar / Lounge",
+  
+    // Work / study
+    study: "Study",
+    home_office: "Home Office",
+    library: "Library",
+  
+    // Outdoor
+    balcony: "Balcony",
+    terrace: "Terrace",
+    courtyard: "Courtyard",
+    verandah: "Verandah",
+    sit_out: "Sit-out",
+    deck: "Deck",
+    garden: "Garden",
+    gazebo: "Gazebo",
+    pergola: "Pergola",
+  
+    // Parking
+    parking: "Parking",
+    garage: "Garage",
+  
+    // Personal / service / storage
+    dressing_room: "Dressing Room",
+    servant_room: "Servant Room",
+    maid_room: "Maid Room",
+    store: "Store / Utility",
+    store_room: "Store Room",
+    shoe_closet: "Shoe Closet",
+  
+    // Structural
+    staircase: "Staircase",
+    basement: "Basement",
+  
+    // Utilities
+    utility: "Utility",
+    laundry: "Laundry",
+    wash_area: "Wash Area",
+    overhead_water_tank: "Overhead Water Tank",
+    underground_water_tank: "Underground Water Tank",
+    electrical_room: "Electrical Room",
+  
+    // Amenities
+    gym: "Gym",
+    pool: "Pool",
+  
+    // Fallback
+    other: "Other",
+  };
+  
 // helper to pretty print the type as a label
 function prettyLabel(type: RoomType): string {
     return type

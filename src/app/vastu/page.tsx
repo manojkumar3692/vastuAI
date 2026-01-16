@@ -11,7 +11,8 @@ import React, {
 import { directionForPoint } from "@/lib/vastuGeometry";
 import { evaluateVastu, type VastuSummary } from "@/lib/vastuRules";
 import type { RoomPoint, RoomType } from "@/types/vastu";
-import { ROOM_TYPE_LABEL } from "@/lib/reportPdf";
+import { ROOM_TYPE_LABEL } from "@/lib/templates";
+
 
 
 declare global {
@@ -255,6 +256,59 @@ const [fakeOrderId, setFakeOrderId] = useState<string | null>(null); // now used
 //     };
 //   }, []);
 
+// const handlePayWithPhonePe = async () => {
+//     if (!customerName || !customerEmail) {
+//       alert("Please enter at least your name and email.");
+//       return;
+//     }
+//     if (!vastuSummary) {
+//       alert("Please review the Vastu Summary before payment.");
+//       return;
+//     }
+  
+//     setIsSubmitting(true);
+//     try {
+//       const res = await fetch("/api/payment/phonepe-order", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           amount: 100, // ₹499 in paise
+//           customer: {
+//             name: customerName,
+//             email: customerEmail,
+//             phone: customerPhone || undefined,
+//           },
+//           summary: vastuSummary, // optional – for server-side logging later
+//         }),
+//       });
+  
+//       if (!res.ok) {
+//         const err = await res.json().catch(() => ({}));
+//         console.error("PhonePe init failed:", err);
+//         alert("Unable to start PhonePe payment. Please try again.");
+//         return;
+//       }
+  
+//       const data = await res.json();
+  
+//       if (!data?.redirectUrl) {
+//         alert("Payment system did not return a redirect URL.");
+//         return;
+//       }
+  
+//       if (data.merchantTransactionId) {
+//         setFakeOrderId(data.merchantTransactionId);
+//       }
+  
+//       window.location.href = data.redirectUrl;
+//     } catch (err) {
+//       console.error("PhonePe error:", err);
+//       alert("Unable to start PhonePe payment. Please try again.");
+//     } finally {
+//       setIsSubmitting(false);
+//     }
+//   };
+
 const handlePayWithPhonePe = async () => {
     if (!customerName || !customerEmail) {
       alert("Please enter at least your name and email.");
@@ -267,42 +321,36 @@ const handlePayWithPhonePe = async () => {
   
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/payment/phonepe-order", {
+      // 🔹 For now: directly generate & download the full PDF report (no payment)
+      const res = await fetch("/api/generate-report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: 100, // ₹499 in paise
-          customer: {
-            name: customerName,
-            email: customerEmail,
-            phone: customerPhone || undefined,
-          },
-          summary: vastuSummary, // optional – for server-side logging later
+          customerName,
+          summary: vastuSummary,
         }),
       });
   
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        console.error("PhonePe init failed:", err);
-        alert("Unable to start PhonePe payment. Please try again.");
+        console.error("Generate-report failed:", err);
+        alert("Unable to generate Vastu report. Please try again.");
         return;
       }
   
-      const data = await res.json();
-  
-      if (!data?.redirectUrl) {
-        alert("Payment system did not return a redirect URL.");
-        return;
-      }
-  
-      if (data.merchantTransactionId) {
-        setFakeOrderId(data.merchantTransactionId);
-      }
-  
-      window.location.href = data.redirectUrl;
+      // 🔹 Turn the PDF response into a download
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "vastu-report-test.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("PhonePe error:", err);
-      alert("Unable to start PhonePe payment. Please try again.");
+      console.error("Generate-report error:", err);
+      alert("Unable to generate Vastu report. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -708,66 +756,70 @@ const handlePayWithPhonePe = async () => {
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_#1d9bf044,_transparent_55%),radial-gradient(circle_at_bottom,_#4f46e533,_transparent_55%)]" />
 
       <header className="border-b border-slate-800/60 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-500/20 ring-1 ring-indigo-400/60">
-              <span className="font-display text-lg leading-none text-indigo-300">
-                V
-              </span>
-            </div>
-            <div>
-              <div className="font-display text-base font-semibold tracking-tight text-slate-50">
-                VastuSense AI
-              </div>
-              <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                Floor Plan Vastu Analyzer
-              </div>
-            </div>
-          </div>
-          <div className="hidden text-[11px] text-emerald-300/90 sm:block">
-  🔒 Secure payments via PhonePe • AI-assisted, rule-based Vastu
-</div>
+  <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+    <div className="flex items-center gap-2">
+      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-500/20 ring-1 ring-indigo-400/60">
+        <span className="font-display text-lg leading-none text-indigo-300">
+          V
+        </span>
+      </div>
+      <div>
+        <div className="font-display text-base font-semibold tracking-tight text-slate-50">
+          VastuCheck
         </div>
-      </header>
+        <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+          AI Floor Plan Vastu Check
+        </div>
+      </div>
+    </div>
+
+    <div className="hidden text-[11px] text-emerald-300/90 sm:flex flex-col items-end">
+      <span>🧠 AI + rule-based Vastu engine</span>
+      <span className="text-[10px] text-slate-400">
+        We don’t store your plan • Secure payments via PhonePe
+      </span>
+    </div>
+  </div>
+</header>
 
       {/* Hero + wizard */}
       <section className="mx-auto max-w-6xl px-4 pt-6 pb-10 sm:pt-8 sm:pb-14">
-        {/* Hero band */}
-        <div className="mb-4 sm:mb-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/40 bg-indigo-500/10 px-3 py-1 text-[10px] font-medium text-indigo-100">
-            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            AI-assisted Vastu • Upload your floor plan, get a PDF report
-          </div>
+{/* Hero band */}
+<div className="mb-4 sm:mb-6">
+  <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/40 bg-indigo-500/10 px-3 py-1 text-[10px] font-medium text-indigo-100">
+    <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+    Trusted AI Vastu check • Works on any 2D floor plan
+  </div>
 
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h1 className="font-display text-2xl font-semibold tracking-tight text-slate-50 sm:text-3xl">
-                Modern Vastu analysis for your home layout.
-              </h1>
-              <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-slate-300 sm:text-[13px]">
-                Upload your 2D floor plan and let our AI assist with room
-                detection, direction mapping, and Vastu scoring. Download a
-                structured PDF and optionally upgrade to a paid, email-delivered
-                report.
-              </p>
-            </div>
-            <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-300">
-              <div className="flex items-center gap-1.5">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-800/80 text-[10px]">
-                  ✓
-                </span>
-                <span>No login required</span>
-              </div>
-              <div className="hidden h-4 w-px bg-slate-700 sm:block" />
-              <div className="hidden items-center gap-1.5 sm:flex">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-800/80 text-[10px]">
-                  ₹
-                </span>
-                <span>Pay only when you want full PDF</span>
-              </div>
-            </div>
-          </div>
-        </div>
+  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <h1 className="font-display text-[22px] font-semibold tracking-tight text-slate-50 sm:text-[26px]">
+        Check your home’s Vastu in minutes — from your floor plan.
+      </h1>
+      <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-slate-300 sm:text-[13px]">
+        Upload your 2D floor plan and let{" "}
+        <span className="font-semibold text-indigo-200">VastuCheck</span> map
+        each room to its Vastu zone, calculate a score, and prepare a
+        sharable PDF report with room-wise verdicts and priorities.
+      </p>
+    </div>
+
+    <div className="mt-2 flex flex-col items-start gap-2 text-[11px] text-slate-300 sm:items-end">
+      <div className="flex items-center gap-1.5">
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-800/80 text-[10px]">
+          ✓
+        </span>
+        <span>No login • No consultant booking</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-800/80 text-[10px]">
+          📄
+        </span>
+        <span>Detailed PDF you can share with architect / family</span>
+      </div>
+    </div>
+  </div>
+</div>
 
         {/* Stepper */}
         <div className="mb-4 rounded-2xl border border-slate-800 bg-slate-900/70 px-3 py-2 sm:px-4 sm:py-3">
