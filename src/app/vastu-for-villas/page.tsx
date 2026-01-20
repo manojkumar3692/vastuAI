@@ -13,10 +13,19 @@ export const metadata: Metadata = {
     "vastu for corner villa",
     "vastu for house plan",
     "online vastu for villa",
+    "villa floor plan vastu check",
+    "independent house vastu check online",
     "vastu for east facing house",
     "vastu for north facing house",
     "vastu for west facing house",
+    "vastu for south facing house",
+    "vastu for farmhouse",
+    "vastu for g+1 house plan",
   ],
+  robots: { index: true, follow: true },
+  alternates: {
+    canonical: "https://vastucheck.in/vastu-for-villas",
+  },
   openGraph: {
     title: "Vastu for Villas & Independent Houses | VastuCheck.in",
     description:
@@ -24,21 +33,83 @@ export const metadata: Metadata = {
     url: "https://vastucheck.in/vastu-for-villas",
     siteName: "VastuCheck.in",
     type: "website",
+    images: [
+      {
+        url: "https://vastucheck.in/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "VastuCheck - Vastu for Villas & Independent Houses",
+      },
+    ],
   },
-  alternates: {
-    canonical: "https://vastucheck.in/vastu-for-villas",
+  twitter: {
+    card: "summary_large_image",
+    title: "Vastu for Villas & Independent Houses | Online Vastu Check",
+    description:
+      "Upload your villa plan and get a room-by-room Vastu report with score, verdict and practical remedies.",
+    images: ["https://vastucheck.in/og-image.png"],
   },
   icons: {
     icon: "/om.png",
     apple: "/om.png",
-  }
+  },
 };
 
 export default function VastuForVillasPage() {
   const year = new Date().getFullYear();
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "Does VastuCheck support east-facing, north-facing, west-facing and south-facing houses?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text:
+            "Yes. VastuCheck is direction-based. It works for east-facing, north-facing, west-facing and south-facing houses. You set the correct North orientation, and the zones are calculated from there.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What does VastuCheck cover for villas and independent houses?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text:
+            "VastuCheck covers main entrance, bedrooms, kitchen, pooja, toilets, staircase, Brahmasthan, underground/overhead water tanks, borewell/sump, septic tank, car parking and major external elements based on direction mapping.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "When is the best time to run a Vastu check for a villa plan?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text:
+            "The best time is before construction or before major renovation. If the plan is still flexible, you can correct room placement and key elements early to avoid costly changes later.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Is the VastuCheck report enough without meeting a Vastu consultant?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text:
+            "For many homes, the report gives strong direction-wise guidance and practical remedies. If you want deeper consultation, you can still meet a Vastu expert and use the structured PDF as a base document for discussion.",
+        },
+      },
+    ],
+  };
+
   return (
     <main className="min-h-screen bg-[#fdf4e6] text-[#2b1b10]">
+      {/* FAQ JSON-LD for SEO */}
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
       <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-10 pt-6 sm:px-6 lg:px-8">
         {/* NAVBAR */}
         <header className="flex items-center justify-between gap-4 py-2">
@@ -70,6 +141,12 @@ export default function VastuForVillasPage() {
               className="text-[11px] text-[#6b5340] transition hover:text-[#b65c10]"
             >
               Start VastuCheck
+            </a>
+            <a
+              href="/vastu-for-flats"
+              className="text-[11px] text-[#6b5340] transition hover:text-[#b65c10]"
+            >
+              Vastu for Flats
             </a>
             <a
               href="/contact"
@@ -117,7 +194,11 @@ export default function VastuForVillasPage() {
                 <strong className="font-semibold text-[#b45309]">
                   Vastu report PDF
                 </strong>
-                .
+                . Think of it as a{" "}
+                <strong className="font-semibold text-[#b45309]">
+                  villa floor plan Vastu check
+                </strong>{" "}
+                where your plan is mapped into NE/SE/SW/NW zones.
               </p>
             </div>
 
@@ -131,7 +212,8 @@ export default function VastuForVillasPage() {
                   Villas & plots
                 </p>
                 <p className="mt-1 text-[12px] text-[#6b5340]">
-                  Works for gated community villas, corner plots & farmhouses.
+                  Works for gated community villas, corner plots, farmhouses &
+                  standalone homes.
                 </p>
               </div>
 
@@ -156,7 +238,7 @@ export default function VastuForVillasPage() {
                 </p>
                 <p className="mt-1 text-[12px] text-[#6b5340]">
                   Focus on Brahmasthan, water bodies, staircase, borewell,
-                  septic tank & more.
+                  septic tank & overhead tank.
                 </p>
               </div>
             </div>
@@ -248,18 +330,21 @@ export default function VastuForVillasPage() {
               covers
             </h2>
             <p className="mt-2 text-[12px] leading-relaxed text-[#5a4a36] sm:text-[13px]">
-              When you are dealing with a villa or independent house, Vastu is
-              not only about rooms – it is also about{" "}
+              For villas and independent houses, Vastu is not only about rooms —
+              it also includes{" "}
               <strong className="font-semibold text-[#b45309]">
                 plot orientation, Brahmasthan, water bodies, staircase, car
                 parking, septic tank and overhead tank
               </strong>
-              . VastuCheck reads your plan, maps every room and key element to
-              its direction and generates a structured{" "}
+              . VastuCheck maps your plan into{" "}
+              <strong className="font-semibold text-[#b45309]">
+                North / South / East / West and NE/SE/SW/NW zones
+              </strong>{" "}
+              and generates a structured{" "}
               <strong className="font-semibold text-[#b45309]">
                 Vastu report PDF
               </strong>{" "}
-              for your architect and family.
+              you can share with your architect and family.
             </p>
           </div>
 
@@ -314,10 +399,10 @@ export default function VastuForVillasPage() {
                 Can I change plans based on the report before construction?
               </h3>
               <p className="mt-1">
-                That is one of the best uses of VastuCheck. You can run the
-                layout through the engine, see which rooms or elements are
-                problematic and then work with your architect to{" "}
-                <strong>refine the design before pouring concrete</strong>.
+                Yes — that’s one of the best uses. Run the layout, see which
+                rooms or elements are problematic, then work with your architect
+                to{" "}
+                <strong>refine the design before construction starts</strong>.
                 This avoids costly corrections later.
               </p>
             </div>
@@ -327,10 +412,9 @@ export default function VastuForVillasPage() {
               </h3>
               <p className="mt-1">
                 For many straightforward homes, the report is strong guidance.
-                But Vastu is a traditional system – if you feel the need, you
-                can still consult a trusted expert and use{" "}
-                <strong>this structured PDF as a base document</strong> for
-                deeper discussion.
+                If you want deeper consultation, you can still consult a trusted
+                expert and use{" "}
+                <strong>this structured PDF as a base document</strong>.
               </p>
             </div>
           </div>

@@ -219,6 +219,12 @@ export default function HomePage() {
                 Vastu for Villas
               </a>
               <a
+                href="/check-vastu-online"
+                className="hover:text-emerald-700 underline-offset-4 hover:underline"
+              >
+                Check Vastu Online
+              </a>
+              <a
                 href="/contact"
                 className="hover:text-emerald-700 underline-offset-4 hover:underline"
               >

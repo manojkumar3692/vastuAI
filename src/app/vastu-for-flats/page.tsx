@@ -17,7 +17,13 @@ export const metadata: Metadata = {
     "vastu for Indian apartments",
     "vastu for high rise flats",
     "vastu for flat main door",
+    "flat floor plan vastu check",
+    "apartment vastu plan check",
   ],
+  robots: { index: true, follow: true },
+  alternates: {
+    canonical: "https://vastucheck.in/vastu-for-flats",
+  },
   openGraph: {
     title: "Vastu for Flats & Apartments | Online Vastu Check",
     description:
@@ -25,21 +31,83 @@ export const metadata: Metadata = {
     url: "https://vastucheck.in/vastu-for-flats",
     siteName: "VastuCheck.in",
     type: "website",
+    images: [
+      {
+        url: "https://vastucheck.in/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "VastuCheck - Vastu for Flats & Apartments",
+      },
+    ],
   },
-  alternates: {
-    canonical: "https://vastucheck.in/vastu-for-flats",
+  twitter: {
+    card: "summary_large_image",
+    title: "Vastu for Flats & Apartments | Online Vastu Check",
+    description:
+      "Upload your flat plan and get a room-by-room Vastu report with score, verdict and practical remedies.",
+    images: ["https://vastucheck.in/og-image.png"],
   },
   icons: {
     icon: "/om.png",
     apple: "/om.png",
-  }
+  },
 };
 
 export default function VastuForFlatsPage() {
   const year = new Date().getFullYear();
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "Is Vastu different for flats vs independent houses?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text:
+            "Base principles are the same – directions, elements and room placement. The difference is practicality. In flats you cannot move walls, so Vastu for flats focuses more on usage, furniture and subtle corrections instead of demolition. VastuCheck is designed with this reality in mind.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Can I use VastuCheck for a rented apartment?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text:
+            "Yes. Many users are tenants who want peace of mind without major changes. The report highlights what you can change easily today – bed placement, storage, colours and usage of certain corners, etc.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Does VastuCheck work for 1BHK, 2BHK and 3BHK flats?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text:
+            "Yes. VastuCheck works for 1BHK, 2BHK and 3BHK flats. You upload your floor plan, mark rooms on the grid, and the report explains each room’s direction, verdict and practical remedies.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What do I need to run a Vastu check for my flat?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text:
+            "A clear 2D floor plan image (JPG/PNG) is enough. Builder brochures, architect drawings and clean hand sketches work well. You then set orientation, centre, and verify room markers.",
+        },
+      },
+    ],
+  };
+
   return (
     <main className="min-h-screen bg-[#fdf4e6] text-[#2b1b10]">
+      {/* FAQ JSON-LD for SEO */}
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
       <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-10 pt-6 sm:px-6 lg:px-8">
         {/* NAVBAR */}
         <header className="flex items-center justify-between gap-4 py-2">
@@ -71,6 +139,12 @@ export default function VastuForFlatsPage() {
               className="text-[11px] text-[#6b5340] transition hover:text-[#b65c10]"
             >
               Start VastuCheck
+            </a>
+            <a
+              href="/vastu-for-villas"
+              className="text-[11px] text-[#6b5340] transition hover:text-[#b65c10]"
+            >
+              Vastu for Villas
             </a>
             <a
               href="/contact"
@@ -118,7 +192,11 @@ export default function VastuForFlatsPage() {
                 <strong className="font-semibold text-[#b45309]">
                   room-wise Vastu report PDF
                 </strong>{" "}
-                focused on simple, non-structural remedies.
+                focused on simple, non-structural remedies. This works like a{" "}
+                <strong className="font-semibold text-[#b45309]">
+                  flat floor plan Vastu check
+                </strong>{" "}
+                — upload the plan, mark rooms, and get a direction-wise report.
               </p>
             </div>
 
@@ -288,7 +366,7 @@ export default function VastuForFlatsPage() {
             </div>
           </div>
 
-          {/* Q&A for SEO snippets */}
+          {/* Q&A for on-page SEO (also backed by FAQ JSON-LD above) */}
           <div className="space-y-3 border-t border-amber-100 pt-4 text-[12px] text-[#5a4a36] sm:text-[13px]">
             <div>
               <h3 className="font-semibold text-[#2b1b10]">
@@ -315,6 +393,27 @@ export default function VastuForFlatsPage() {
                 changes. The report highlights{" "}
                 <strong>what you can change easily today</strong> – bed
                 placement, storage, colours, usage of certain corners, etc.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-[#2b1b10]">
+                Does VastuCheck work for 1BHK, 2BHK and 3BHK flats?
+              </h3>
+              <p className="mt-1">
+                Yes. VastuCheck is designed for typical Indian flat layouts.
+                Upload your plan, set orientation and centre, then verify rooms
+                to generate a room-wise Vastu report.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-[#2b1b10]">
+                What do I need to check Vastu for my flat online?
+              </h3>
+              <p className="mt-1">
+                A clear 2D floor plan image is enough (JPG/PNG). Builder
+                brochures, architect drawings and clean hand sketches work well.
               </p>
             </div>
           </div>

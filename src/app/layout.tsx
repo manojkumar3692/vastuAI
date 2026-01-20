@@ -1,6 +1,7 @@
 // src/app/layout.tsx
 import "./globals.css";
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Inter, Playfair_Display } from "next/font/google";
 
 const inter = Inter({
@@ -13,9 +14,6 @@ const playfair = Playfair_Display({
   variable: "--font-playfair",
 });
 
-
-
-// src/app/layout.tsx
 export const metadata: Metadata = {
   metadataBase: new URL("https://vastucheck.in"),
   title: {
@@ -32,12 +30,13 @@ export const metadata: Metadata = {
     url: "https://vastucheck.in",
     siteName: "VastuCheck.in",
     type: "website",
-    images: ["/og-image.png"], // add this file
+    images: ["/og-image.png"],
   },
-  icons: { icon: "/om.png", apple: "/om.png" },
+  icons: {
+    icon: "/om.png",
+    apple: "/om.png",
+  },
 };
-
-
 
 export default function RootLayout({
   children,
@@ -49,6 +48,17 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${playfair.variable} font-sans bg-slate-950 text-slate-100`}
       >
+        {/* Microsoft Clarity */}
+        <Script id="ms-clarity" strategy="afterInteractive">
+          {`
+            (function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "v4mwpd9r5u");
+          `}
+        </Script>
+
         {children}
       </body>
     </html>
