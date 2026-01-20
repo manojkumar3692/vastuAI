@@ -25,14 +25,27 @@ export const metadata: Metadata = {
   openGraph: {
     title: "VastuCheck.in – Online Vastu Check for Your Home Floor Plan",
     description:
-      "Upload your floor plan and get an AI-backed, room-by-room Vastu report with score, verdict and practical non-demolition remedies.",
+      "Upload your floor plan and get a room-by-room Vastu report with score, verdict and practical non-demolition remedies.",
     url: "https://vastucheck.in",
     siteName: "VastuCheck.in",
     type: "website",
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: "https://vastucheck.in",
   },
+  icons: {
+    icon: "/om.png",
+    apple: "/om.png",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "VastuCheck.in – Online Vastu Check by Floor Plan",
+    description:
+      "Traditional Vastu rules + tech-enabled plan reading. Get room-wise verdicts & remedies in minutes.",
+    images: ["/og-image.png"],
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function HomePage() {
@@ -87,16 +100,63 @@ export default function HomePage() {
     name: "VastuCheck – Online Vastu Report from Floor Plan",
     description:
       "Upload your house or flat floor plan and get an AI-assisted Vastu report based on traditional Vastu rules, with direction-wise score, room-wise verdicts and practical non-demolition remedies.",
-    brand: {
-      "@type": "Brand",
-      name: "VastuCheck.in",
-    },
+    image: [
+      "https://vastucheck.in/om.png",          // ✅ critical: required
+      "https://vastucheck.in/og-image.png",    // optional: add if you have
+    ],
+    brand: { "@type": "Brand", name: "VastuCheck.in" },
+  
+    // Optional but often helpful
+    sku: "VASTUCHECK-PDF-REPORT",
+    category: "Digital Services",
+  
     offers: {
       "@type": "Offer",
+      url: "https://vastucheck.in/vastu",
       price: "49",
       priceCurrency: "INR",
       availability: "https://schema.org/InStock",
-      url: "https://vastucheck.in/vastu",
+      itemCondition: "https://schema.org/NewCondition",
+  
+      // ✅ Good practice (previously Search Console also flagged this for Product snippets)
+      priceValidUntil: "2026-12-31",
+  
+      // ✅ non-critical: shippingDetails (digital delivery style)
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingRate: {
+          "@type": "MonetaryAmount",
+          value: "0",
+          currency: "INR",
+        },
+        shippingDestination: {
+          "@type": "DefinedRegion",
+          addressCountry: "IN",
+        },
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          handlingTime: {
+            "@type": "QuantitativeValue",
+            minValue: 0,
+            maxValue: 1,
+            unitCode: "HUR", // hours
+          },
+          transitTime: {
+            "@type": "QuantitativeValue",
+            minValue: 0,
+            maxValue: 1,
+            unitCode: "HUR",
+          },
+        },
+      },
+  
+      // ✅ non-critical: return policy
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "IN",
+        returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
+        merchantReturnLink: "https://vastucheck.in/cancellations-and-refunds",
+      },
     },
   };
 

@@ -29,6 +29,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://vastucheck.in/vastu-for-flats",
   },
+  icons: {
+    icon: "/om.png",
+    apple: "/om.png",
+  }
 };
 
 export default function VastuForFlatsPage() {

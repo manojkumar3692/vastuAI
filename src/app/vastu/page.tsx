@@ -1,17 +1,24 @@
 // src/app/vastu/page.tsx
 "use client";
 
-import React, {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-  useEffect,
-} from "react";
+import React, { useCallback, useMemo, useRef, useState, useEffect } from "react";
+import Script from "next/script";
 import { directionForPoint } from "@/lib/vastuGeometry";
 import { evaluateVastu, type VastuSummary } from "@/lib/vastuRules";
 import type { RoomPoint, RoomType } from "@/types/vastu";
-import { ROOM_TYPE_LABEL } from "@/lib/templates";
+import PaymentStep from "@/components/vastu/PaymentStep";
+import VastuSummaryPanel from "@/components/vastu/VastuSummaryPanel";
+import { ROOM_TYPE_OPTIONS } from "@/lib/vastuRoomOptions";
+
+/**
+ * ✅ SEO additions in this client page:
+ * - HowTo + FAQ schema via next/script
+ * - Visible "Free Vastu Check (2 rooms free)" copy in hero
+ *
+ * ✅ Razorpay CSS:
+ * - Put it INSIDE the component return so it actually applies.
+ *   (Best practice is globals.css, but you asked to update this file fully.)
+ */
 
 declare global {
   interface Window {
@@ -28,173 +35,10 @@ const STEPS = [
   "Payment",
 ] as const;
 
-type CentrePoint = {
-  x: number;
-  y: number;
-};
-
-export const ROOM_TYPE_OPTIONS: {
-  value: RoomType;
-  label: string;
-  group: string;
-}[] = [
-  // Amenities
-  { value: "gym", label: ROOM_TYPE_LABEL.gym, group: "Amenities" },
-  { value: "pool", label: ROOM_TYPE_LABEL.pool, group: "Amenities" },
-
-  // Bathrooms
-  { value: "toilet", label: ROOM_TYPE_LABEL.toilet, group: "Bathrooms" },
-  {
-    value: "powder_room",
-    label: ROOM_TYPE_LABEL.powder_room,
-    group: "Bathrooms",
-  },
-  { value: "bathroom", label: ROOM_TYPE_LABEL.bathroom, group: "Bathrooms" },
-
-  // Bedrooms
-  {
-    value: "master_bedroom",
-    label: ROOM_TYPE_LABEL.master_bedroom,
-    group: "Bedrooms",
-  },
-  { value: "bedroom", label: ROOM_TYPE_LABEL.bedroom, group: "Bedrooms" },
-  { value: "kids_room", label: ROOM_TYPE_LABEL.kids_room, group: "Bedrooms" },
-  {
-    value: "guest_room",
-    label: ROOM_TYPE_LABEL.guest_room,
-    group: "Bedrooms",
-  },
-
-  // Core rooms
-  { value: "kitchen", label: ROOM_TYPE_LABEL.kitchen, group: "Core Rooms" },
-  { value: "living", label: ROOM_TYPE_LABEL.living, group: "Core Rooms" },
-  { value: "dining", label: ROOM_TYPE_LABEL.dining, group: "Core Rooms" },
-  { value: "pooja", label: ROOM_TYPE_LABEL.pooja, group: "Core Rooms" },
-
-  // Entertainment
-  {
-    value: "media_room",
-    label: ROOM_TYPE_LABEL.media_room,
-    group: "Entertainment",
-  },
-  {
-    value: "home_theater",
-    label: ROOM_TYPE_LABEL.home_theater,
-    group: "Entertainment",
-  },
-  {
-    value: "gaming_room",
-    label: ROOM_TYPE_LABEL.gaming_room,
-    group: "Entertainment",
-  },
-  {
-    value: "music_room",
-    label: ROOM_TYPE_LABEL.music_room,
-    group: "Entertainment",
-  },
-  { value: "bar", label: ROOM_TYPE_LABEL.bar, group: "Entertainment" },
-
-  // Entrance
-  {
-    value: "main_entrance",
-    label: ROOM_TYPE_LABEL.main_entrance,
-    group: "Entrance",
-  },
-  { value: "foyer", label: ROOM_TYPE_LABEL.foyer, group: "Entrance" },
-  { value: "porch", label: ROOM_TYPE_LABEL.porch, group: "Entrance" },
-  { value: "mud_room", label: ROOM_TYPE_LABEL.mud_room, group: "Entrance" },
-
-  // Outdoor
-  { value: "balcony", label: ROOM_TYPE_LABEL.balcony, group: "Outdoor" },
-  { value: "terrace", label: ROOM_TYPE_LABEL.terrace, group: "Outdoor" },
-  { value: "courtyard", label: ROOM_TYPE_LABEL.courtyard, group: "Outdoor" },
-  { value: "verandah", label: ROOM_TYPE_LABEL.verandah, group: "Outdoor" },
-  { value: "sit_out", label: ROOM_TYPE_LABEL.sit_out, group: "Outdoor" },
-  { value: "deck", label: ROOM_TYPE_LABEL.deck, group: "Outdoor" },
-  { value: "garden", label: ROOM_TYPE_LABEL.garden, group: "Outdoor" },
-  { value: "gazebo", label: ROOM_TYPE_LABEL.gazebo, group: "Outdoor" },
-  { value: "pergola", label: ROOM_TYPE_LABEL.pergola, group: "Outdoor" },
-
-  // Parking
-  { value: "parking", label: ROOM_TYPE_LABEL.parking, group: "Parking" },
-  { value: "garage", label: ROOM_TYPE_LABEL.garage, group: "Parking" },
-
-  // Personal spaces
-  {
-    value: "dressing_room",
-    label: ROOM_TYPE_LABEL.dressing_room,
-    group: "Personal Spaces",
-  },
-
-  // Service areas
-  {
-    value: "servant_room",
-    label: ROOM_TYPE_LABEL.servant_room,
-    group: "Service Areas",
-  },
-  {
-    value: "maid_room",
-    label: ROOM_TYPE_LABEL.maid_room,
-    group: "Service Areas",
-  },
-
-  // Storage
-  { value: "store_room", label: ROOM_TYPE_LABEL.store_room, group: "Storage" },
-  {
-    value: "shoe_closet",
-    label: ROOM_TYPE_LABEL.shoe_closet,
-    group: "Storage",
-  },
-  { value: "store", label: ROOM_TYPE_LABEL.store, group: "Storage" },
-
-  // Structural
-  {
-    value: "staircase",
-    label: ROOM_TYPE_LABEL.staircase,
-    group: "Structural",
-  },
-  { value: "basement", label: ROOM_TYPE_LABEL.basement, group: "Structural" },
-
-  // Utilities
-  { value: "utility", label: ROOM_TYPE_LABEL.utility, group: "Utilities" },
-  { value: "laundry", label: ROOM_TYPE_LABEL.laundry, group: "Utilities" },
-  { value: "wash_area", label: ROOM_TYPE_LABEL.wash_area, group: "Utilities" },
-  {
-    value: "overhead_water_tank",
-    label: ROOM_TYPE_LABEL.overhead_water_tank,
-    group: "Utilities",
-  },
-  {
-    value: "underground_water_tank",
-    label: ROOM_TYPE_LABEL.underground_water_tank,
-    group: "Utilities",
-  },
-  {
-    value: "electrical_room",
-    label: ROOM_TYPE_LABEL.electrical_room,
-    group: "Utilities",
-  },
-
-  // Work spaces
-  { value: "study", label: ROOM_TYPE_LABEL.study, group: "Work Spaces" },
-  {
-    value: "home_office",
-    label: ROOM_TYPE_LABEL.home_office,
-    group: "Work Spaces",
-  },
-  { value: "library", label: ROOM_TYPE_LABEL.library, group: "Work Spaces" },
-
-  // Fallback
-  { value: "other", label: ROOM_TYPE_LABEL.other, group: "Other" },
-];
+type CentrePoint = { x: number; y: number };
 
 type DetectRoomsApiResponse = {
-  rooms: {
-    name?: string;
-    type?: RoomType;
-    x: number;
-    y: number;
-  }[];
+  rooms: { name?: string; type?: RoomType; x: number; y: number }[];
 };
 
 export default function VastuPage() {
@@ -215,22 +59,70 @@ export default function VastuPage() {
   const isOrientationStep = currentStep === "Set Orientation";
   const imageRef = useRef<HTMLImageElement | null>(null);
 
+  const razorpayFormRef = useRef<HTMLFormElement | null>(null);
+  const [paymentStage, setPaymentStage] = useState<
+    "idle" | "processing" | "success"
+  >("idle");
+
+  // ✅ Vastu Summary (Step 5)
+  const vastuSummary: VastuSummary | null = useMemo(() => {
+    if (!imageUrl || rooms.length === 0) return null;
+    const withDirections = rooms.map((r) => ({
+      id: r.id,
+      name: r.name,
+      type: r.type,
+      direction: directionForPoint(r.x, r.y, centre, rotationDeg),
+    }));
+    return evaluateVastu(withDirections);
+  }, [imageUrl, rooms, centre, rotationDeg]);
+
+  // ✅ Razorpay button injection (if you still use razorpayFormRef somewhere)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (currentStep !== "Payment") return;
+
+    const form = razorpayFormRef.current;
+    if (!form) return;
+
+    form.innerHTML = "";
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/payment-button.js";
+    script.async = true;
+    script.setAttribute("data-payment_button_id", "pl_S6HHQm0InTxYG0");
+
+    script.onerror = () => {
+      console.error("Razorpay script failed to load");
+    };
+
+    form.appendChild(script);
+  }, [currentStep]);
+
+  // ✅ Store payload for report generation (Payment step can use it)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (currentStep !== "Payment") return;
+    if (!vastuSummary) return;
+
+    sessionStorage.setItem(
+      "vastu_report_payload",
+      JSON.stringify({
+        customerName: "Customer",
+        summary: vastuSummary,
+      })
+    );
+  }, [currentStep, vastuSummary]);
+
+  useEffect(() => {
+    if (currentStep === "Payment") setPaymentStage("idle");
+  }, [currentStep]);
+
   const getImageRect = () => {
-    if (imageRef.current) {
-      return imageRef.current.getBoundingClientRect();
-    }
+    if (imageRef.current) return imageRef.current.getBoundingClientRect();
     return null;
   };
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  // Payment + PDF
-  const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [customerCity, setCustomerCity] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fakeOrderId, setFakeOrderId] = useState<string | null>(null);
 
   // AI + PDF states
   const [isDetectingRooms, setIsDetectingRooms] = useState(false);
@@ -241,52 +133,6 @@ export default function VastuPage() {
     stepIndex < STEPS.length - 1 &&
     !(currentStep === "Upload Floor Plan" && !imageUrl) &&
     !(currentStep === "Verify Rooms" && rooms.length === 0);
-
-  const handlePayWithPhonePe = async () => {
-    if (!customerName || !customerEmail) {
-      alert("Please enter at least your name and email.");
-      return;
-    }
-    if (!vastuSummary) {
-      alert("Please review the Vastu Summary before payment.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      // For now: directly generate & download the full PDF report (no payment)
-      const res = await fetch("/api/generate-report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerName,
-          summary: vastuSummary,
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        console.error("Generate-report failed:", err);
-        alert("Unable to generate Vastu report. Please try again.");
-        return;
-      }
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "vastu-report-test.pdf";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Generate-report error:", err);
-      alert("Unable to generate Vastu report. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const goNext = () => {
     if (currentStep === "Upload Floor Plan" && !imageUrl) return;
@@ -310,24 +156,19 @@ export default function VastuPage() {
       return;
     }
 
-    // Preview URL
     const url = URL.createObjectURL(file);
     setImageUrl((prev: any) => {
       if (prev) URL.revokeObjectURL(prev);
       return url;
     });
 
-    // Base64 for AI
     const reader = new FileReader();
     reader.onloadend = () => {
       const result = reader.result;
-      if (typeof result === "string") {
-        setPlanImageDataUrl(result);
-      }
+      if (typeof result === "string") setPlanImageDataUrl(result);
     };
     reader.readAsDataURL(file);
 
-    // Reset geometry + rooms
     setRotationDeg(0);
     setCentre({ x: 0.5, y: 0.5 });
     setRooms([]);
@@ -362,24 +203,16 @@ export default function VastuPage() {
     e.preventDefault();
   };
 
-  const rotateLeft = () => {
-    setRotationDeg((deg) => (deg - 22.5 + 360) % 360);
-  };
-
-  const rotateRight = () => {
-    setRotationDeg((deg) => (deg + 22.5) % 360);
-  };
+  const rotateLeft = () => setRotationDeg((deg) => (deg - 22.5 + 360) % 360);
+  const rotateRight = () => setRotationDeg((deg) => (deg + 22.5) % 360);
 
   // Centre selection
-  const handleCentrePointer: React.PointerEventHandler<HTMLDivElement> = (
-    e
-  ) => {
+  const handleCentrePointer: React.PointerEventHandler<HTMLDivElement> = (e) => {
     const rect = getImageRect();
     if (!rect) return;
 
     const rawX = (e.clientX - rect.left) / rect.width;
     const rawY = (e.clientY - rect.top) / rect.height;
-
     setCentre({ x: clampNorm(rawX), y: clampNorm(rawY) });
   };
 
@@ -443,21 +276,7 @@ export default function VastuPage() {
     updateRoomPosition(draggingRoomId, rawX, rawY);
   };
 
-  const stopDraggingRoom = () => {
-    setDraggingRoomId(null);
-  };
-
-  // Vastu Summary (Step 5)
-  const vastuSummary: VastuSummary | null = useMemo(() => {
-    if (!imageUrl || rooms.length === 0) return null;
-    const withDirections = rooms.map((r) => ({
-      id: r.id,
-      name: r.name,
-      type: r.type,
-      direction: directionForPoint(r.x, r.y, centre, rotationDeg),
-    }));
-    return evaluateVastu(withDirections);
-  }, [imageUrl, rooms, centre, rotationDeg]);
+  const stopDraggingRoom = () => setDraggingRoomId(null);
 
   const FREE_ROOMS_COUNT = 2;
 
@@ -546,7 +365,7 @@ export default function VastuPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerName: customerName || undefined,
+          customerName: "Customer",
           summary: vastuSummary,
         }),
       });
@@ -570,9 +389,116 @@ export default function VastuPage() {
     }
   };
 
-  // ---------- UI (saffron / ivory theme, logic unchanged) ----------
+  // ✅ JSON-LD for /vastu page (calculator-style)
+  const howToSchema = useMemo(
+    () => ({
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      name: "How to do a free Vastu check using your floor plan",
+      description:
+        "Upload a floor plan, set orientation and centre, tag rooms, then view a free 2-room Vastu preview. Unlock the full PDF report for ₹49.",
+      step: [
+        {
+          "@type": "HowToStep",
+          name: "Upload floor plan",
+          text: "Upload a clear 2D floor plan image (JPG/PNG).",
+        },
+        {
+          "@type": "HowToStep",
+          name: "Set orientation",
+          text: "Rotate the plan so the north direction matches your property.",
+        },
+        {
+          "@type": "HowToStep",
+          name: "Set centre",
+          text: "Tap the centre of the built-up area (Brahmasthan).",
+        },
+        {
+          "@type": "HowToStep",
+          name: "Verify rooms",
+          text: "Auto-detect or manually tag rooms (kitchen, bedrooms, toilets, entrance).",
+        },
+        {
+          "@type": "HowToStep",
+          name: "Get free preview",
+          text: "See the first 2 rooms fully unlocked for free.",
+        },
+        {
+          "@type": "HowToStep",
+          name: "Unlock full report",
+          text: "Pay ₹49 securely and download the full PDF report.",
+        },
+      ],
+    }),
+    []
+  );
+
+  const vastuFaqSchema = useMemo(
+    () => ({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "Is VastuCheck free?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes. You get a free Vastu preview for the first 2 rooms. The complete room-by-room PDF report can be unlocked for ₹49.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Does this work for flats and villas?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes. VastuCheck works for apartments, villas and independent houses as long as you upload a clear 2D floor plan.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Is AI deciding the Vastu?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "No. AI only assists in reading the floor plan and writing the report. The scoring and verdict follow fixed traditional Vastu rules.",
+          },
+        },
+      ],
+    }),
+    []
+  );
+
+  // ---------- UI ----------
   return (
     <main className="min-h-screen bg-[#f8f4ec] text-[#1b2430]">
+      {/* ✅ Razorpay button styles (best in globals.css, but included here as requested) */}
+      <style jsx global>{`
+        .rzp-wrap .razorpay-payment-button {
+          width: 100% !important;
+          display: block !important;
+          border-radius: 12px !important;
+          padding: 12px 14px !important;
+          font-weight: 700 !important;
+          font-size: 12px !important;
+        }
+        .rzp-wrap form {
+          width: 100%;
+        }
+      `}</style>
+
+      {/* ✅ JSON-LD */}
+      <Script
+        id="vastu-howto"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+      />
+      <Script
+        id="vastu-faq"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(vastuFaqSchema) }}
+      />
+
       {/* soft saffron / green glow */}
       <div className="pointer-events-none fixed inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,_#f973161a,_transparent_60%),radial-gradient(circle_at_bottom,_#16a34a1a,_transparent_60%)]" />
 
@@ -595,10 +521,10 @@ export default function VastuPage() {
 
           <div className="hidden flex-col items-end text-[11px] sm:flex">
             <span className="rounded-full bg-emerald-100/80 px-3 py-0.5 text-[10px] font-medium text-emerald-800 ring-1 ring-emerald-400/60">
-              Hybrid Vastu scoring engine (rules + AI assistance)
+              Free preview: 2 rooms · Full report ₹49
             </span>
             <span className="mt-1 text-[10px] text-amber-800/70">
-              We don’t store your plan • Payments handled securely by PhonePe
+              We don’t store your plan • Payments handled securely
             </span>
           </div>
         </div>
@@ -610,25 +536,27 @@ export default function VastuPage() {
         <div className="mb-5 rounded-2xl border border-amber-100/80 bg-gradient-to-r from-amber-50 via-orange-50 to-emerald-50 px-4 py-3 sm:px-5 sm:py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1.5">
+              {/* ✅ Updated for SEO + conversion */}
               <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[10px] font-medium text-amber-800 ring-1 ring-amber-300/70">
                 <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                Upload your 2D plan · Get a Vastu scoring report in minutes
+                Free Vastu Check (2 rooms free) · Unlock full PDF for ₹49
               </div>
+
               <h1 className="text-[20px] font-semibold tracking-tight text-[#2b1b10] sm:text-[24px]">
                 Check your home’s Vastu using your floor plan — without a site
                 visit.
               </h1>
               <p className="max-w-2xl text-[12px] leading-relaxed text-[#5f4630] sm:text-[13px]">
-                VastuCheck reads your floor plan, maps every room to its{" "}
+                Upload your plan, set North and the centre, then tag rooms. We
+                map each room to the{" "}
                 <span className="font-semibold">
                   North–East–South–West energy grid
                 </span>{" "}
-                and prepares a{" "}
+                and show a free preview first. AI is used only to assist with
+                reading the drawing and writing the report —{" "}
                 <span className="font-semibold">
-                  room-wise Vastu summary with practical remedies
-                </span>{" "}
-                based on traditional rules. AI is used only to assist with
-                reading the drawing and writing the report.
+                  Vastu verdicts follow fixed traditional rules.
+                </span>
               </p>
             </div>
 
@@ -851,15 +779,15 @@ export default function VastuPage() {
 
                         {/* Rooms overlay */}
                         {currentStep === "Verify Rooms" && (
-                         <div
-                         ref={roomsOverlayRef}
-                         className="absolute inset-0 z-30 touch-none"
-                         onPointerDown={handleRoomsBackgroundPointerDown}
-                         onPointerMove={handleRoomsPointerMove}
-                         onPointerUp={stopDraggingRoom}
-                         onPointerLeave={stopDraggingRoom}
-                         onPointerCancel={stopDraggingRoom}
-                       >
+                          <div
+                            ref={roomsOverlayRef}
+                            className="absolute inset-0 z-30 touch-none"
+                            onPointerDown={handleRoomsBackgroundPointerDown}
+                            onPointerMove={handleRoomsPointerMove}
+                            onPointerUp={stopDraggingRoom}
+                            onPointerLeave={stopDraggingRoom}
+                            onPointerCancel={stopDraggingRoom}
+                          >
                             <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded-full bg-[#2b1b10]/90 px-3 py-1 text-[10px] text-amber-50 shadow">
                               Tap to add rooms · drag the coloured dots
                             </div>
@@ -880,24 +808,24 @@ export default function VastuPage() {
                                     transform: "translate(-50%, -50%)",
                                   }}
                                 >
-<div
-  className={[
-    "h-4 w-4 cursor-pointer rounded-full border-2 shadow-sm shadow-amber-900/40",
-    room.type === "toilet"
-      ? "border-rose-400 bg-rose-200/90"
-      : room.type === "kitchen"
-      ? "border-amber-400 bg-amber-200/90"
-      : "border-emerald-400 bg-emerald-200/90",
-  ].join(" ")}
-  onPointerDown={(e) => {
-    e.stopPropagation();
-    setDraggingRoomId(room.id);
-  }}
-  onPointerUp={(e) => {
-    e.stopPropagation();
-    setDraggingRoomId(null);
-  }}
-/>
+                                  <div
+                                    className={[
+                                      "h-4 w-4 cursor-pointer rounded-full border-2 shadow-sm shadow-amber-900/40",
+                                      room.type === "toilet"
+                                        ? "border-rose-400 bg-rose-200/90"
+                                        : room.type === "kitchen"
+                                        ? "border-amber-400 bg-amber-200/90"
+                                        : "border-emerald-400 bg-emerald-200/90",
+                                    ].join(" ")}
+                                    onPointerDown={(e) => {
+                                      e.stopPropagation();
+                                      setDraggingRoomId(room.id);
+                                    }}
+                                    onPointerUp={(e) => {
+                                      e.stopPropagation();
+                                      setDraggingRoomId(null);
+                                    }}
+                                  />
                                   <div className="mt-1 rounded-full bg-[#2b1b10]/90 px-2 py-0.5 text-[9px] text-amber-50 shadow">
                                     {room.name || label}
                                   </div>
@@ -945,9 +873,9 @@ export default function VastuPage() {
                   {currentStep === "Verify Rooms" &&
                     "Use AI-assisted detection or place rooms manually. You can rename rooms and adjust positions easily."}
                   {currentStep === "Vastu Summary" &&
-                    "See how each room scores direction-wise before unlocking the full Vastu blueprint."}
+                    "See the free preview (2 rooms) before unlocking the full Vastu blueprint."}
                   {currentStep === "Payment" &&
-                    "Share your basic details and complete payment securely to receive the full PDF report."}
+                    "Complete payment securely to download the full PDF report."}
                 </p>
               </div>
               {imageUrl && (
@@ -1110,430 +1038,20 @@ export default function VastuPage() {
 
               {/* Vastu Summary */}
               {currentStep === "Vastu Summary" && (
-                <>
-                  {rooms.length === 0 ? (
-                    <p className="text-[11px] text-rose-500">
-                      No rooms defined. Go back to{" "}
-                      <span className="font-semibold">Verify Rooms</span> to add
-                      them before viewing the Vastu summary.
-                    </p>
-                  ) : !vastuSummary ? (
-                    <p className="text-[11px] text-[#8b7357]">
-                      Preparing your Vastu summary…
-                    </p>
-                  ) : (
-                    <div className="flex h-full flex-col gap-3">
-                      {/* Overall score card */}
-                      <div className="rounded-xl border border-emerald-300/70 bg-emerald-50/80 px-3 py-2.5">
-                        <div className="text-[11px] font-semibold text-emerald-900">
-                          Overall Vastu Score
-                        </div>
-                        <div className="mt-1 flex items-baseline gap-2">
-                          <span className="text-2xl font-semibold text-emerald-800">
-                            {vastuSummary.score}
-                          </span>
-                          <span className="text-[11px] text-emerald-900">
-                            / 100
-                          </span>
-                        </div>
-                        <div className="mt-1 text-[11px] text-emerald-900/90">
-                          {vastuSummary.verdict}
-                        </div>
-                      </div>
-
-                      {/* Imbalance highlight */}
-                      <div className="rounded-lg border border-amber-300/70 bg-amber-50/80 px-3 py-2.5">
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
-                            !
-                          </span>
-                          <div className="text-[11px] font-semibold text-[#7a4b12]">
-                            {badRoomsCount === 0
-                              ? "No major Vastu issues detected."
-                              : badRoomsCount === 1
-                              ? "1 room is in a weak Vastu zone."
-                              : `${badRoomsCount} rooms are in weak Vastu zones.`}
-                          </div>
-                        </div>
-                        <p className="mt-1 text-[10px] text-[#8b5b1a]">
-                          {imbalanceCopy}
-                        </p>
-                      </div>
-
-                      {/* Free 3-room preview */}
-                      <div className="rounded-2xl border border-amber-200 bg-[#fdf7ee] px-3 py-3 shadow-sm">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="space-y-0.5">
-                            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">
-                              Free preview
-                            </div>
-                            <div className="text-[12px] font-semibold text-[#2b1b10]">
-                              First {visibleRooms.length} rooms fully unlocked
-                            </div>
-                            <p className="text-[10px] text-[#8b7357]">
-                              See how our Vastu scoring engine reads your layout
-                              before unlocking the complete blueprint.
-                            </p>
-                          </div>
-
-                          <div className="flex flex-col items-end gap-1">
-                            <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[9px] font-medium text-emerald-900 ring-1 ring-emerald-300/80">
-                              ✅ Based on traditional Vastu rules
-                            </span>
-                            {lockedRooms.length > 0 && (
-                              <span className="rounded-full bg-white px-2 py-0.5 text-[9px] text-[#8b7357] ring-1 ring-amber-100">
-                                {lockedRooms.length} more rooms in full report
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="mt-3 space-y-2">
-                          {visibleRooms.map((r, index) => {
-                            const verdictTone =
-                              r.verdict === "Auspicious" ||
-                              r.verdict === "Favourable"
-                                ? "text-emerald-800"
-                                : r.verdict === "Average"
-                                ? "text-amber-800"
-                                : "text-rose-700";
-
-                            const accentBar =
-                              r.verdict === "Auspicious" ||
-                              r.verdict === "Favourable"
-                                ? "from-emerald-400 to-emerald-600"
-                                : r.verdict === "Average"
-                                ? "from-amber-400 to-amber-600"
-                                : "from-rose-500 to-red-700";
-
-                            return (
-                              <div
-                                key={r.id}
-                                className="relative overflow-hidden rounded-xl border border-amber-100 bg-white px-3 py-2.5 text-[10px] shadow-sm"
-                              >
-                                <div
-                                  className={
-                                    "absolute inset-y-0 left-0 w-1 bg-gradient-to-b " +
-                                    accentBar
-                                  }
-                                />
-
-                                <div className="flex items-start justify-between gap-2 pl-2">
-                                  <div>
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="text-[11px] font-semibold text-[#2b1b10]">
-                                        {r.name}
-                                      </span>
-                                      <span className="rounded-full bg-[#fdf7ee] px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] text-[#a58b6e]">
-                                        Room {index + 1}
-                                      </span>
-                                    </div>
-                                    <div className="text-[9px] text-[#a58b6e]">
-                                      {ROOM_TYPE_LABEL[r.type]}
-                                    </div>
-                                  </div>
-
-                                  <div className="flex flex-col items-end gap-1">
-                                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-medium text-[#7a4b12]">
-                                      Direction:{" "}
-                                      <span className="font-semibold">
-                                        {r.direction}
-                                      </span>
-                                    </span>
-                                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-medium text-emerald-900">
-                                      Free insight
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div className="mt-2 flex items-center justify-between gap-2 pl-2">
-                                  <div
-                                    className={
-                                      verdictTone + " text-[11px] font-semibold"
-                                    }
-                                  >
-                                    {r.verdict}
-                                  </div>
-                                  {r.notes && (
-                                    <div className="max-w-xs text-right text-[9px] text-[#8b7357]">
-                                      {r.notes}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        <p className="mt-3 text-[10px] text-[#a58b6e]">
-                          The full report adds{" "}
-                          <span className="font-semibold text-[#5f4630]">
-                            room-wise priorities, corrections and a sharable PDF
-                          </span>{" "}
-                          you can keep for future reference.
-                        </p>
-                      </div>
-
-                      {/* FULL REPORT OFFER SECTION */}
-                      <section className="mt-4 rounded-3xl border border-amber-100 bg-white/95 shadow-md shadow-amber-100/70">
-                        <div className="grid gap-4 md:grid-cols-[1.7fr,1.3fr] md:items-center">
-                          {/* Right: price card + timer */}
-                          <div className="flex flex-col justify-between rounded-2xl bg-[#fff8ea] p-3 ring-1 ring-amber-200 sm:p-4">
-                            {/* Price badge */}
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#b16612]">
-                                  Launch Offer
-                                </p>
-                                <p className="mt-1 text-sm font-semibold text-[#2b1b10]">
-                                  Full VastuCheck blueprint for this floor plan
-                                </p>
-                                <p className="mt-1 text-[11px] text-[#8b7357]">
-                                  One-time fee • per layout • no subscription
-                                </p>
-                              </div>
-                              <div className="flex flex-col items-end">
-                                <div className="rounded-full bg-white px-3 py-1 text-right shadow-sm shadow-amber-200/70">
-                                  <div className="text-[10px] text-[#8b7357] line-through">
-                                    ₹ 499
-                                  </div>
-                                  <div className="text-[18px] font-bold text-[#d97706] leading-tight">
-                                    ₹ 49
-                                  </div>
-                                  <div className="text-[9px] text-[#8b7357]">
-                                    Introductory price
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Timer row */}
-                            <div className="mt-3 rounded-2xl bg-[#2b1b10] px-3 py-2 text-[10px] text-amber-50 sm:text-[11px]">
-                              <div className="flex items-center justify-between gap-2">
-                                <div>
-                                  <p className="font-semibold">
-                                    Offer active on this device now
-                                  </p>
-                                  <p className="text-[10px] text-[#f4d9a4]">
-                                    Use the launch price before it goes back to
-                                    regular pricing.
-                                  </p>
-                                </div>
-                                {/* Timer placeholders – hook your real countdown here */}
-                                <div className="flex items-center gap-1.5">
-                                  <div className="flex flex-col items-center rounded-md bg-[#3b2b1a] px-2 py-1">
-                                    <span className="text-[11px] font-semibold">
-                                      00
-                                    </span>
-                                    <span className="text-[8px] uppercase tracking-[0.18em] text-[#f4d9a4]">
-                                      hrs
-                                    </span>
-                                  </div>
-                                  <div className="flex flex-col items-center rounded-md bg-[#3b2b1a] px-2 py-1">
-                                    <span className="text-[11px] font-semibold">
-                                      14
-                                    </span>
-                                    <span className="text-[8px] uppercase tracking-[0.18em] text-[#f4d9a4]">
-                                      min
-                                    </span>
-                                  </div>
-                                  <div className="flex flex-col items-center rounded-md bg-[#3b2b1a] px-2 py-1">
-                                    <span className="text-[11px] font-semibold">
-                                      32
-                                    </span>
-                                    <span className="text-[8px] uppercase tracking-[0.18em] text-[#f4d9a4]">
-                                      sec
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* CTA button */}
-                            <button
-                              type="button"
-                              onClick={goNext} // or handlePayWithPhonePe when on Payment step
-                              className="mt-3 w-full rounded-full bg-[#d97706] px-4 py-2.5 text-[12px] font-semibold text-white shadow-sm shadow-amber-500/70 hover:bg-[#c25f02]"
-                            >
-                              Get my full VastuCheck report for ₹49
-                            </button>
-
-                            <p className="mt-1 text-center text-[10px] text-[#8b7357]">
-                              Secure PhonePe payment • AI-assisted reading •
-                              Based on traditional Vastu rules.
-                            </p>
-                          </div>
-
-                          {/* Left: copy */}
-                          <div className="space-y-2 p-2">
-                            <h3 className="text-base font-semibold text-[#2b1b10] sm:text-lg">
-                              Fix your home’s Vastu issues before they become
-                              costly mistakes.
-                            </h3>
-                            <p className="text-[12px] text-[#8b7357] sm:text-[13px]">
-                              Unlock your complete{" "}
-                              <span className="font-semibold text-[#2b1b10]">
-                                VastuCheck report
-                              </span>{" "}
-                              prepared using{" "}
-                              <span className="font-semibold">
-                                traditional Vastu rules
-                              </span>{" "}
-                              with AI only assisting in reading your floor plan
-                              and writing. Perfect to share with your family,
-                              architect or builder before you finalise
-                              construction or interiors.
-                            </p>
-
-                            <ul className="mt-2 space-y-1.5 text-[11px] text-[#5f4630] sm:text-[12px]">
-                              <li>
-                                •{" "}
-                                <span className="font-semibold">
-                                  Room-by-room verdicts
-                                </span>{" "}
-                                for bedrooms, kitchen, toilets, puja, living,
-                                balcony, staircase and more.
-                              </li>
-                              <li>
-                                •{" "}
-                                <span className="font-semibold">
-                                  Direction-wise mapping
-                                </span>{" "}
-                                to NE / SE / SW / NW / East / West / North /
-                                South.
-                              </li>
-                              <li>
-                                •{" "}
-                                <span className="font-semibold">
-                                  Simple non-demolition remedies
-                                </span>{" "}
-                                – colours, usage tips, placements and only small
-                                civil changes if truly needed.
-                              </li>
-                              <li>
-                                •{" "}
-                                <span className="font-semibold">
-                                  Top 5 “must-fix” items
-                                </span>{" "}
-                                so you know what to correct first for stability,
-                                health and finances.
-                              </li>
-                              <li>
-                                • Notes for{" "}
-                                <span className="font-semibold">
-                                  money, career, relationships, sleep and
-                                  children’s study zones
-                                </span>
-                                .
-                              </li>
-                              <li>
-                                •{" "}
-                                <span className="font-semibold">
-                                  Printable 10–15 page PDF
-                                </span>{" "}
-                                you can save and reuse whenever you discuss
-                                Vastu for this property.
-                              </li>
-                            </ul>
-
-                            <p className="mt-2 text-[11px] text-[#a05819]">
-                              Launch phase: pricing kept low so more families
-                              can check their layouts before spending lakhs on
-                              construction and interiors.
-                            </p>
-                          </div>
-                        </div>
-                      </section>
-                    </div>
-                  )}
-                </>
+                <VastuSummaryPanel
+                  roomsCount={rooms.length}
+                  vastuSummary={vastuSummary}
+                  badRoomsCount={badRoomsCount}
+                  imbalanceCopy={imbalanceCopy}
+                  visibleRooms={visibleRooms}
+                  lockedRooms={lockedRooms}
+                  onGetFullReport={goNext}
+                />
               )}
 
               {/* Payment */}
               {currentStep === "Payment" && (
-                <div className="flex h-full flex-col gap-3">
-                  <div className="rounded-xl border border-amber-100 bg-[#fdf7ee] px-3 py-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <div className="text-[11px] font-semibold text-[#2b1b10]">
-                          Comprehensive Vastu Report
-                        </div>
-                        <div className="text-[10px] text-[#8b7357]">
-                          Orientation, room-wise verdicts & remedies in a
-                          structured PDF.
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-[13px] font-bold text-amber-700">
-                          ₹ 49
-                        </div>
-                        <div className="text-[9px] text-[#8b7357]">
-                          One-time · per layout
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="Full Name"
-                      className="w-full rounded-md border border-amber-200 bg-white px-2 py-1.5 text-[11px] text-[#2b1b10] placeholder:text-[#b39b7e] focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    />
-                    <input
-                      type="email"
-                      value={customerEmail}
-                      onChange={(e) => setCustomerEmail(e.target.value)}
-                      placeholder="Email (for sending PDF)"
-                      className="w-full rounded-md border border-amber-200 bg-white px-2 py-1.5 text-[11px] text-[#2b1b10] placeholder:text-[#b39b7e] focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    />
-                    <input
-                      type="tel"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      placeholder="Mobile (optional)"
-                      className="w-full rounded-md border border-amber-200 bg-white px-2 py-1.5 text-[11px] text-[#2b1b10] placeholder:text-[#b39b7e] focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    />
-                    <input
-                      type="text"
-                      value={customerCity}
-                      onChange={(e) => setCustomerCity(e.target.value)}
-                      placeholder="City / Location"
-                      className="w-full rounded-md border border-amber-200 bg-white px-2 py-1.5 text-[11px] text-[#2b1b10] placeholder:text-[#b39b7e] focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    />
-
-                    <p className="text-[10px] text-[#a58b6e]">
-                      Once payment is enabled, your report will be generated on
-                      the server and emailed to you. For now, this button
-                      directly downloads the report for testing.
-                    </p>
-
-                    {fakeOrderId && (
-                      <div className="rounded-md border border-emerald-400/60 bg-emerald-50 px-2 py-1.5 text-[10px] text-emerald-900">
-                        Transaction ID:{" "}
-                        <span className="font-semibold">{fakeOrderId}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-auto">
-                    <button
-                      type="button"
-                      onClick={handlePayWithPhonePe}
-                      disabled={isSubmitting || !customerName || !customerEmail}
-                      className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-[11px] font-semibold text-white shadow-sm shadow-emerald-500/70 hover:bg-emerald-700 disabled:opacity-40"
-                    >
-                      {isSubmitting
-                        ? "Processing…"
-                        : "Pay 49 securely with Razorpay"}
-                    </button>
-                    <p className="mt-1 text-center text-[10px] text-[#a58b6e]">
-                      You will be redirected to PhonePe’s secure UPI / card / Net Banking
-                    </p>
-                  </div>
-                </div>
+                <PaymentStep visible={currentStep === "Payment"} summary={vastuSummary!} />
               )}
 
               {/* Upload step extra text */}
@@ -1571,9 +1089,22 @@ export default function VastuPage() {
                 Next
               </button>
             </div>
+
+            {/* Optional SEO text block at bottom of right panel (helps relevance) */}
+            <div className="mt-3 rounded-lg border border-amber-100 bg-amber-50/60 px-3 py-2 text-[10px] text-[#7a6046]">
+              <span className="font-semibold text-[#2b1b10]">
+                Free Vastu Check Online:
+              </span>{" "}
+              Upload a floor plan to preview 2 rooms free, then unlock the full
+              Vastu report PDF for flats and villas.
+            </div>
           </div>
         </div>
       </section>
+
+      {/* If you still inject Razorpay into a form somewhere, keep this ref around.
+          If PaymentStep handles it internally, you can delete razorpayFormRef + its effect. */}
+      <form ref={razorpayFormRef} className="hidden" />
     </main>
   );
 }
