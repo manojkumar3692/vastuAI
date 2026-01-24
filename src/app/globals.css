@@ -40,3 +40,13 @@ html {
     font-size: 18px; /* 💻 Desktop slightly bigger */
   }
 }
+
+/* Make Razorpay injected payment button full width + match theme a bit */
+.rzp-wrap .razorpay-payment-button {
+  width: 100% !important;
+  display: block !important;
+  border-radius: 12px !important;
+  padding: 12px 14px !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+}

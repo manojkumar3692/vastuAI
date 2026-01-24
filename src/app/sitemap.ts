@@ -1,39 +1,33 @@
 // src/app/sitemap.ts
 import type { MetadataRoute } from "next";
 
-type ChangeFreq = NonNullable<MetadataRoute.Sitemap[number]["changeFrequency"]>;
-
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://vastucheck.in";
-  const now = new Date();
 
-  const routes: Array<{
+  const staticRoutes: Array<{
     path: string;
+    changeFrequency: NonNullable<MetadataRoute.Sitemap[number]["changeFrequency"]>;
     priority: number;
-    changeFrequency: ChangeFreq;
   }> = [
-    { path: "", priority: 1.0, changeFrequency: "weekly" },
-
-    // 🔥 Core intent pages
-    { path: "/check-vastu-online", priority: 0.95, changeFrequency: "weekly" },
-    { path: "/vastu", priority: 0.9, changeFrequency: "monthly" },
-
-    // Supporting SEO pages
-    { path: "/vastu-for-flats", priority: 0.8, changeFrequency: "monthly" },
-    { path: "/vastu-for-villas", priority: 0.8, changeFrequency: "monthly" },
-
-    // Trust / legal pages
-    { path: "/contact", priority: 0.6, changeFrequency: "yearly" },
-    { path: "/privacy-policy", priority: 0.4, changeFrequency: "yearly" },
-    { path: "/terms-and-conditions", priority: 0.4, changeFrequency: "yearly" },
-    { path: "/shipping-policy", priority: 0.4, changeFrequency: "yearly" },
-    { path: "/cancellations-and-refunds", priority: 0.4, changeFrequency: "yearly" },
+    { path: "", changeFrequency: "weekly", priority: 1.0 },
+    { path: "/check-vastu-online", changeFrequency: "weekly", priority: 0.95 },
+    { path: "/free-vastu-check", changeFrequency: "weekly", priority: 0.95 },
+    { path: "/vastu", changeFrequency: "monthly", priority: 0.9 },
+    { path: "/vastu-for-flats", changeFrequency: "monthly", priority: 0.8 },
+    { path: "/vastu-for-villas", changeFrequency: "monthly", priority: 0.8 },
+    { path: "/contact", changeFrequency: "yearly", priority: 0.6 },
+    { path: "/privacy-policy", changeFrequency: "yearly", priority: 0.4 },
+    { path: "/terms-and-conditions", changeFrequency: "yearly", priority: 0.4 },
+    { path: "/shipping-policy", changeFrequency: "yearly", priority: 0.4 },
+    { path: "/cancellations-and-refunds", changeFrequency: "yearly", priority: 0.4 },
   ];
 
-  return routes.map(({ path, priority, changeFrequency }) => ({
-    url: `${baseUrl}${path}`,
+  const now = new Date();
+
+  return staticRoutes.map((r) => ({
+    url: `${baseUrl}${r.path}`,
     lastModified: now,
-    changeFrequency,
-    priority,
+    changeFrequency: r.changeFrequency,
+    priority: r.priority,
   }));
 }
