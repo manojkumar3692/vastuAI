@@ -1,7 +1,13 @@
 // src/app/vastu/page.tsx
 "use client";
 
-import React, { useCallback, useMemo, useRef, useState, useEffect } from "react";
+import React, {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+} from "react";
 import Script from "next/script";
 import { directionForPoint } from "@/lib/vastuGeometry";
 import { evaluateVastu, type VastuSummary } from "@/lib/vastuRules";
@@ -58,7 +64,8 @@ export default function VastuPage() {
 
   const isOrientationStep = currentStep === "Set Orientation";
   const imageRef = useRef<HTMLImageElement | null>(null);
-
+  const [autoDetectTriggered, setAutoDetectTriggered] = useState(false);
+  const [showRoomsList, setShowRoomsList] = useState(false);
   const razorpayFormRef = useRef<HTMLFormElement | null>(null);
   const [paymentStage, setPaymentStage] = useState<
     "idle" | "processing" | "success"
@@ -130,12 +137,29 @@ export default function VastuPage() {
 
   const canGoBack = stepIndex > 0;
   const canGoNext =
-    stepIndex < STEPS.length - 1 &&
-    !(currentStep === "Upload Floor Plan" && !imageUrl) &&
-    !(currentStep === "Verify Rooms" && rooms.length === 0);
+  stepIndex < STEPS.length - 1 &&
+  !isDetectingRooms &&
+  !(currentStep === "Upload Floor Plan" && !imageUrl) &&
+  !(currentStep === "Verify Rooms" && rooms.length === 0);
 
   const goNext = () => {
     if (currentStep === "Upload Floor Plan" && !imageUrl) return;
+
+    // ✅ When user finishes Set Centre -> Next, auto-trigger room detection
+    if (currentStep === "Set Centre") {
+      setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
+
+      // Trigger AI detect only if we have image data and rooms are empty
+      if (!autoDetectTriggered && planImageDataUrl && rooms.length === 0) {
+        setAutoDetectTriggered(true);
+        // Let UI change step first, then call detect
+        setTimeout(() => {
+          handleAutoDetectRooms();
+        }, 50);
+      }
+      return;
+    }
+
     setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
   };
 
@@ -174,6 +198,7 @@ export default function VastuPage() {
     setRooms([]);
     setDraggingRoomId(null);
     setIsDetectingRooms(false);
+    setAutoDetectTriggered(false);
   }, []);
 
   const clearImage = () => {
@@ -186,6 +211,7 @@ export default function VastuPage() {
     setDraggingRoomId(null);
     setIsDetectingRooms(false);
     setStepIndex(0);
+    setAutoDetectTriggered(false);
   };
 
   const onFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
@@ -207,7 +233,9 @@ export default function VastuPage() {
   const rotateRight = () => setRotationDeg((deg) => (deg + 22.5) % 360);
 
   // Centre selection
-  const handleCentrePointer: React.PointerEventHandler<HTMLDivElement> = (e) => {
+  const handleCentrePointer: React.PointerEventHandler<HTMLDivElement> = (
+    e
+  ) => {
     const rect = getImageRect();
     if (!rect) return;
 
@@ -781,7 +809,10 @@ export default function VastuPage() {
                         {currentStep === "Verify Rooms" && (
                           <div
                             ref={roomsOverlayRef}
-                            className="absolute inset-0 z-30 touch-none"
+                            className={[
+                              "absolute inset-0 z-30 touch-none",
+                              isDetectingRooms ? "pointer-events-none opacity-60" : "",
+                            ].join(" ")}
                             onPointerDown={handleRoomsBackgroundPointerDown}
                             onPointerMove={handleRoomsPointerMove}
                             onPointerUp={stopDraggingRoom}
@@ -847,6 +878,35 @@ export default function VastuPage() {
                         >
                           Clear plan
                         </button>
+                        {/* ✅ Detecting overlay (authentic "system working" feel) */}
+{isDetectingRooms && currentStep === "Verify Rooms" && (
+  <div className="absolute inset-0 z-[80] flex items-center justify-center bg-white/80 backdrop-blur-sm">
+    <div className="w-[92%] max-w-xl rounded-2xl border border-amber-200 bg-white px-6 py-10 text-center shadow-xl">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-emerald-500 shadow-md">
+        <span className="text-2xl text-white">⌁</span>
+      </div>
+
+      <h3 className="text-[20px] font-semibold tracking-tight text-[#2b1b10]">
+        Detecting Room Labels on Floor Plan
+      </h3>
+
+      <p className="mt-2 text-[13px] leading-relaxed text-[#6b5340]">
+        Finding and matching room labels so we can analyse your Vastu layout accurately.
+      </p>
+
+      {/* tiny loader */}
+      <div className="mt-6 flex items-center justify-center gap-2">
+        <span className="h-2 w-2 animate-bounce rounded-full bg-amber-500 [animation-delay:-0.2s]" />
+        <span className="h-2 w-2 animate-bounce rounded-full bg-orange-500 [animation-delay:-0.1s]" />
+        <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-500" />
+      </div>
+
+      <div className="mt-6 text-[11px] text-[#8b7357]">
+        Tip: Clear room names in the plan image improves detection accuracy.
+      </div>
+    </div>
+  </div>
+)}
                       </div>
                     )}
                   </div>
@@ -947,13 +1007,10 @@ export default function VastuPage() {
               {currentStep === "Verify Rooms" && (
                 <div className="flex h-full flex-col gap-3">
                   <p className="text-[#8b7357]">
-                    Use{" "}
-                    <span className="font-semibold text-[#2b1b10]">
-                      AI-assisted auto-detect
-                    </span>{" "}
-                    first, then fine-tune names and room types. You can also tap
-                    on the plan to add extra rooms manually.
+                    Rooms will be auto-detected. You can drag dots on the plan
+                    to correct positions. Edit room names/types only if needed.
                   </p>
+
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <button
                       type="button"
@@ -963,11 +1020,16 @@ export default function VastuPage() {
                     >
                       {isDetectingRooms
                         ? "Detecting rooms..."
-                        : "Auto-detect rooms (AI-assisted)"}
+                        : "Re-run auto-detect"}
                     </button>
+
                     <button
                       type="button"
-                      onClick={() => setRooms([])}
+                      onClick={() => {
+                        setRooms([]);
+                        setShowRoomsList(true);
+                        setAutoDetectTriggered(false);
+                      }}
                       disabled={rooms.length === 0}
                       className="flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-[11px] font-medium text-[#5f4630] hover:bg-amber-50 disabled:opacity-40"
                     >
@@ -975,64 +1037,94 @@ export default function VastuPage() {
                     </button>
                   </div>
 
-                  <div className="mt-1 flex-1 space-y-2 overflow-auto pr-1">
-                    {rooms.length === 0 && (
-                      <p className="text-[11px] text-[#a58b6e]">
-                        No rooms added yet. Tap on the floor plan, or click{" "}
-                        <span className="font-semibold">Auto-detect rooms</span>{" "}
-                        to let the helper engine place them for you.
-                      </p>
-                    )}
-                    {rooms.map((room, index) => (
-                      <div
-                        key={room.id}
-                        className="rounded-lg border border-amber-100 bg-[#fdf7ee] px-2 py-2"
-                      >
-                        <div className="mb-1 flex items-center justify-between gap-2">
-                          <span className="text-[11px] font-semibold text-[#2b1b10]">
-                            Room {index + 1}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeRoom(room.id)}
-                            className="text-[10px] text-rose-500 hover:text-rose-600"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                        <input
-                          type="text"
-                          value={room.name}
-                          onChange={(e) =>
-                            updateRoomName(room.id, e.target.value)
-                          }
-                          placeholder="Room name (e.g., Master Bedroom)"
-                          className="mt-1 w-full rounded-md border border-amber-200 bg-white px-2 py-1 text-[11px] text-[#2b1b10] placeholder:text-[#b39b7e] focus:outline-none focus:ring-1 focus:ring-amber-500"
-                        />
-                        <select
-                          value={room.type}
-                          onChange={(e) =>
-                            updateRoomType(room.id, e.target.value as RoomType)
-                          }
-                          className="mt-1 w-full rounded-md border border-amber-200 bg-white px-2 py-1 text-[11px] text-[#2b1b10] focus:outline-none focus:ring-1 focus:ring-amber-500"
-                        >
-                          {ROOM_TYPE_OPTIONS.map((opt) => (
-                            <option
-                              key={opt.value}
-                              value={opt.value}
-                              className="bg-white"
-                            >
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="mt-1 text-[10px] text-[#a58b6e]">
-                          Position: x {(room.x * 100).toFixed(0)}%, y{" "}
-                          {(room.y * 100).toFixed(0)}%
-                        </div>
+                  {/* ✅ Compact summary */}
+                  {rooms.length > 0 && (
+                    <div className="rounded-lg border border-amber-100 bg-amber-50/60 px-3 py-2 text-[11px] text-[#5f4630] flex items-center justify-between gap-2">
+                      <div>
+                        <span className="font-semibold text-[#2b1b10]">
+                          Rooms added: {rooms.length}
+                        </span>
+                        <span className="ml-2 text-[10px] text-[#8b7357]">
+                          Drag dots on plan to adjust
+                        </span>
                       </div>
-                    ))}
-                  </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowRoomsList((v) => !v)}
+                        className="rounded-md border border-amber-200 bg-white px-2 py-1 text-[10px] font-medium text-[#5f4630] hover:bg-amber-100"
+                      >
+                        {showRoomsList ? "Hide list" : "Edit list"}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* ✅ Show list only when needed */}
+                  {(rooms.length === 0 || showRoomsList) && (
+                    <div className="mt-1 flex-1 space-y-2 overflow-auto pr-1">
+                      {rooms.length === 0 && (
+                        <p className="text-[11px] text-[#a58b6e]">
+                          No rooms added yet. Tap on the floor plan to add a
+                          room or use auto-detect.
+                        </p>
+                      )}
+
+                      {rooms.map((room, index) => (
+                        <div
+                          key={room.id}
+                          className="rounded-lg border border-amber-100 bg-[#fdf7ee] px-2 py-2"
+                        >
+                          <div className="mb-1 flex items-center justify-between gap-2">
+                            <span className="text-[11px] font-semibold text-[#2b1b10]">
+                              Room {index + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeRoom(room.id)}
+                              className="text-[10px] text-rose-500 hover:text-rose-600"
+                            >
+                              Remove
+                            </button>
+                          </div>
+
+                          <input
+                            type="text"
+                            value={room.name}
+                            onChange={(e) =>
+                              updateRoomName(room.id, e.target.value)
+                            }
+                            placeholder="Room name (e.g., Master Bedroom)"
+                            className="mt-1 w-full rounded-md border border-amber-200 bg-white px-2 py-1 text-[11px] text-[#2b1b10] placeholder:text-[#b39b7e] focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+
+                          <select
+                            value={room.type}
+                            onChange={(e) =>
+                              updateRoomType(
+                                room.id,
+                                e.target.value as RoomType
+                              )
+                            }
+                            className="mt-1 w-full rounded-md border border-amber-200 bg-white px-2 py-1 text-[11px] text-[#2b1b10] focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          >
+                            {ROOM_TYPE_OPTIONS.map((opt) => (
+                              <option
+                                key={opt.value}
+                                value={opt.value}
+                                className="bg-white"
+                              >
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+
+                          <div className="mt-1 text-[10px] text-[#a58b6e]">
+                            Position: x {(room.x * 100).toFixed(0)}%, y{" "}
+                            {(room.y * 100).toFixed(0)}%
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1051,7 +1143,10 @@ export default function VastuPage() {
 
               {/* Payment */}
               {currentStep === "Payment" && (
-                <PaymentStep visible={currentStep === "Payment"} summary={vastuSummary!} />
+                <PaymentStep
+                  visible={currentStep === "Payment"}
+                  summary={vastuSummary!}
+                />
               )}
 
               {/* Upload step extra text */}
