@@ -564,28 +564,49 @@ export default function VastuPage() {
         <div className="mb-5 rounded-2xl border border-amber-100/80 bg-gradient-to-r from-amber-50 via-orange-50 to-emerald-50 px-4 py-3 sm:px-5 sm:py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1.5">
-              {/* ✅ Updated for SEO + conversion */}
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[10px] font-medium text-amber-800 ring-1 ring-amber-300/70">
-                <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                Free Vastu Check (2 rooms free) · Unlock full PDF for ₹49
-              </div>
+{/* ✅ Updated for SEO + conversion */}
+<div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[10px] font-medium text-amber-800 ring-1 ring-amber-300/70">
+  <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+  Free Vastu Check (2 rooms free) · Unlock full PDF for ₹49
+</div>
+
+{/* 🔥 Emotion + urgency (soft, not fear-mongering) */}
+<div className="mt-2 grid gap-2 sm:grid-cols-3">
+  <div className="rounded-xl border border-amber-200/70 bg-white/80 px-3 py-2 text-[11px] text-[#5f4630]">
+    <div className="font-semibold text-[#2b1b10]">Avoid costly rework</div>
+    <div className="text-[10px] text-[#8b7357]">
+      Small placement mistakes often get noticed only after moving in.
+    </div>
+  </div>
+
+  <div className="rounded-xl border border-emerald-200/70 bg-white/80 px-3 py-2 text-[11px] text-[#5f4630]">
+    <div className="font-semibold text-[#2b1b10]">Best time: before interiors</div>
+    <div className="text-[10px] text-[#8b7357]">
+      A 10-minute check can save weeks of changes later.
+    </div>
+  </div>
+
+  <div className="rounded-xl border border-amber-200/70 bg-white/80 px-3 py-2 text-[11px] text-[#5f4630]">
+    <div className="font-semibold text-[#2b1b10]">Practical remedies</div>
+    <div className="text-[10px] text-[#8b7357]">
+      Non-structural fixes first, structural only if really needed.
+    </div>
+  </div>
+</div>
 
               <h1 className="text-[20px] font-semibold tracking-tight text-[#2b1b10] sm:text-[24px]">
                 Check your home’s Vastu using your floor plan — without a site
                 visit.
               </h1>
               <p className="max-w-2xl text-[12px] leading-relaxed text-[#5f4630] sm:text-[13px]">
-                Upload your plan, set North and the centre, then tag rooms. We
-                map each room to the{" "}
-                <span className="font-semibold">
-                  North–East–South–West energy grid
-                </span>{" "}
-                and show a free preview first. AI is used only to assist with
-                reading the drawing and writing the report —{" "}
-                <span className="font-semibold">
-                  Vastu verdicts follow fixed traditional rules.
-                </span>
-              </p>
+  <span className="font-semibold">
+    If something feels “off” at home, it’s often a layout issue — this helps you check it quickly.
+  </span>{" "}
+  Upload your plan, set North and the centre, then tag rooms. We map each room to the{" "}
+  <span className="font-semibold">North–East–South–West energy grid</span>{" "}
+  and show a free preview first. AI is used only to assist with reading the drawing and writing the report —{" "}
+  <span className="font-semibold">Vastu verdicts follow fixed traditional rules.</span>
+</p>
             </div>
 
             <div className="flex flex-col items-start gap-1.5 text-[11px] text-[#5f4630] sm:items-end">
@@ -819,9 +840,9 @@ export default function VastuPage() {
                             onPointerLeave={stopDraggingRoom}
                             onPointerCancel={stopDraggingRoom}
                           >
-                            <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded-full bg-[#2b1b10]/90 px-3 py-1 text-[10px] text-amber-50 shadow">
-                              Tap to add rooms · drag the coloured dots
-                            </div>
+<div className="absolute left-1/2 top-2 -translate-x-1/2 rounded-full bg-[#2b1b10]/90 px-3 py-1 text-[10px] text-amber-50 shadow">
+  Tap to add rooms · drag the coloured dots
+</div>
 
                             {rooms.map((room) => {
                               const label =
@@ -1010,6 +1031,11 @@ export default function VastuPage() {
                     Rooms will be auto-detected. You can drag dots on the plan
                     to correct positions. Edit room names/types only if needed.
                   </p>
+                  {/* ✅ Mobile-only hint */}
+<div className="sm:hidden rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-[11px] text-[#5f4630]">
+  <span className="font-semibold text-[#2b1b10]">Tip:</span> Best viewed on{" "}
+  <span className="font-semibold">desktop</span> for precise room placement.
+</div>
 
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <button
@@ -1184,6 +1210,11 @@ export default function VastuPage() {
                 Next
               </button>
             </div>
+            {/* 🔥 Micro-urgency nudge */}
+<div className="mt-3 rounded-lg border border-amber-100 bg-white/70 px-3 py-2 text-[10px] text-[#7a6046]">
+  Most people run this check right before finalising construction / interiors.
+  <span className="font-semibold text-[#2b1b10]"> Doing it now prevents last-minute changes.</span>
+</div>
 
             {/* Optional SEO text block at bottom of right panel (helps relevance) */}
             <div className="mt-3 rounded-lg border border-amber-100 bg-amber-50/60 px-3 py-2 text-[10px] text-[#7a6046]">
