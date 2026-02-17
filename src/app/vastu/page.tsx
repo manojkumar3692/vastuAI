@@ -67,7 +67,6 @@ export default function VastuPage() {
   const [autoDetectTriggered, setAutoDetectTriggered] = useState(false);
   const [showRoomsList, setShowRoomsList] = useState(false);
 
-
   const [justAddedRoomFlash, setJustAddedRoomFlash] = useState(false);
   const [lastActionHint, setLastActionHint] = useState<string>("");
 
@@ -1171,7 +1170,6 @@ export default function VastuPage() {
                 />
               )}
 
-
               {/* Upload step extra text */}
               {currentStep === "Upload Floor Plan" && (
                 <div className="mt-2 space-y-2">
@@ -1225,10 +1223,10 @@ export default function VastuPage() {
               Upload a floor plan to preview 2 rooms free, then unlock the full
               Vastu report PDF for flats and villas.
             </div>
+            
           </div>
         </div>
       </section>
-
     </main>
   );
 }
