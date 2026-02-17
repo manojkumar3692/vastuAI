@@ -12,7 +12,7 @@ import Script from "next/script";
 import { directionForPoint } from "@/lib/vastuGeometry";
 import { evaluateVastu, type VastuSummary } from "@/lib/vastuRules";
 import type { RoomPoint, RoomType } from "@/types/vastu";
-import PaymentStep from "@/components/vastu/PaymentStep";
+// import PaymentStep from "@/components/vastu/PaymentStep";
 import VastuSummaryPanel from "@/components/vastu/VastuSummaryPanel";
 import { ROOM_TYPE_OPTIONS } from "@/lib/vastuRoomOptions";
 
@@ -38,7 +38,7 @@ const STEPS = [
   "Set Centre",
   "Verify Rooms",
   "Vastu Summary",
-  "Payment",
+  // "Payment",
 ] as const;
 
 type CentrePoint = { x: number; y: number };
@@ -66,10 +66,10 @@ export default function VastuPage() {
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [autoDetectTriggered, setAutoDetectTriggered] = useState(false);
   const [showRoomsList, setShowRoomsList] = useState(false);
-  const razorpayFormRef = useRef<HTMLFormElement | null>(null);
-  const [paymentStage, setPaymentStage] = useState<
-    "idle" | "processing" | "success"
-  >("idle");
+
+
+  const [justAddedRoomFlash, setJustAddedRoomFlash] = useState(false);
+  const [lastActionHint, setLastActionHint] = useState<string>("");
 
   // ✅ Vastu Summary (Step 5)
   const vastuSummary: VastuSummary | null = useMemo(() => {
@@ -82,47 +82,6 @@ export default function VastuPage() {
     }));
     return evaluateVastu(withDirections);
   }, [imageUrl, rooms, centre, rotationDeg]);
-
-  // ✅ Razorpay button injection (if you still use razorpayFormRef somewhere)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (currentStep !== "Payment") return;
-
-    const form = razorpayFormRef.current;
-    if (!form) return;
-
-    form.innerHTML = "";
-
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/payment-button.js";
-    script.async = true;
-    script.setAttribute("data-payment_button_id", "pl_S6HHQm0InTxYG0");
-
-    script.onerror = () => {
-      console.error("Razorpay script failed to load");
-    };
-
-    form.appendChild(script);
-  }, [currentStep]);
-
-  // ✅ Store payload for report generation (Payment step can use it)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (currentStep !== "Payment") return;
-    if (!vastuSummary) return;
-
-    sessionStorage.setItem(
-      "vastu_report_payload",
-      JSON.stringify({
-        customerName: "Customer",
-        summary: vastuSummary,
-      })
-    );
-  }, [currentStep, vastuSummary]);
-
-  useEffect(() => {
-    if (currentStep === "Payment") setPaymentStage("idle");
-  }, [currentStep]);
 
   const getImageRect = () => {
     if (imageRef.current) return imageRef.current.getBoundingClientRect();
@@ -137,10 +96,10 @@ export default function VastuPage() {
 
   const canGoBack = stepIndex > 0;
   const canGoNext =
-  stepIndex < STEPS.length - 1 &&
-  !isDetectingRooms &&
-  !(currentStep === "Upload Floor Plan" && !imageUrl) &&
-  !(currentStep === "Verify Rooms" && rooms.length === 0);
+    stepIndex < STEPS.length - 1 &&
+    !isDetectingRooms &&
+    !(currentStep === "Upload Floor Plan" && !imageUrl) &&
+    !(currentStep === "Verify Rooms" && rooms.length === 0);
 
   const goNext = () => {
     if (currentStep === "Upload Floor Plan" && !imageUrl) return;
@@ -281,14 +240,21 @@ export default function VastuPage() {
   const handleRoomsBackgroundPointerDown: React.PointerEventHandler<
     HTMLDivElement
   > = (e) => {
-    if (e.currentTarget !== e.target) return;
-
+    // ✅ Allow taps anywhere on the overlay to add a room.
+    // Room dot handlers already call stopPropagation, so they won't create new rooms.
     const rect = getImageRect();
     if (!rect) return;
 
     const rawX = (e.clientX - rect.left) / rect.width;
     const rawY = (e.clientY - rect.top) / rect.height;
+
     addRoomAt(rawX, rawY);
+
+    // ✅ micro-feedback so it “feels responsive”
+    setLastActionHint("Room added. Drag the dot to move it.");
+    setJustAddedRoomFlash(true);
+    window.setTimeout(() => setJustAddedRoomFlash(false), 650);
+    window.setTimeout(() => setLastActionHint(""), 1200);
   };
 
   const handleRoomsPointerMove: React.PointerEventHandler<HTMLDivElement> = (
@@ -564,49 +530,64 @@ export default function VastuPage() {
         <div className="mb-5 rounded-2xl border border-amber-100/80 bg-gradient-to-r from-amber-50 via-orange-50 to-emerald-50 px-4 py-3 sm:px-5 sm:py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1.5">
-{/* ✅ Updated for SEO + conversion */}
-<div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[10px] font-medium text-amber-800 ring-1 ring-amber-300/70">
-  <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-  Free Vastu Check (2 rooms free) · Unlock full PDF for ₹49
-</div>
+              {/* ✅ Updated for SEO + conversion */}
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[10px] font-medium text-amber-800 ring-1 ring-amber-300/70">
+                <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Free Vastu Check (2 rooms free) · Unlock full PDF for ₹49
+              </div>
 
-{/* 🔥 Emotion + urgency (soft, not fear-mongering) */}
-<div className="mt-2 grid gap-2 sm:grid-cols-3">
-  <div className="rounded-xl border border-amber-200/70 bg-white/80 px-3 py-2 text-[11px] text-[#5f4630]">
-    <div className="font-semibold text-[#2b1b10]">Avoid costly rework</div>
-    <div className="text-[10px] text-[#8b7357]">
-      Small placement mistakes often get noticed only after moving in.
-    </div>
-  </div>
+              {/* 🔥 Emotion + urgency (soft, not fear-mongering) */}
+              <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                <div className="rounded-xl border border-amber-200/70 bg-white/80 px-3 py-2 text-[11px] text-[#5f4630]">
+                  <div className="font-semibold text-[#2b1b10]">
+                    Avoid costly rework
+                  </div>
+                  <div className="text-[10px] text-[#8b7357]">
+                    Small placement mistakes often get noticed only after moving
+                    in.
+                  </div>
+                </div>
 
-  <div className="rounded-xl border border-emerald-200/70 bg-white/80 px-3 py-2 text-[11px] text-[#5f4630]">
-    <div className="font-semibold text-[#2b1b10]">Best time: before interiors</div>
-    <div className="text-[10px] text-[#8b7357]">
-      A 10-minute check can save weeks of changes later.
-    </div>
-  </div>
+                <div className="rounded-xl border border-emerald-200/70 bg-white/80 px-3 py-2 text-[11px] text-[#5f4630]">
+                  <div className="font-semibold text-[#2b1b10]">
+                    Best time: before interiors
+                  </div>
+                  <div className="text-[10px] text-[#8b7357]">
+                    A 10-minute check can save weeks of changes later.
+                  </div>
+                </div>
 
-  <div className="rounded-xl border border-amber-200/70 bg-white/80 px-3 py-2 text-[11px] text-[#5f4630]">
-    <div className="font-semibold text-[#2b1b10]">Practical remedies</div>
-    <div className="text-[10px] text-[#8b7357]">
-      Non-structural fixes first, structural only if really needed.
-    </div>
-  </div>
-</div>
+                <div className="rounded-xl border border-amber-200/70 bg-white/80 px-3 py-2 text-[11px] text-[#5f4630]">
+                  <div className="font-semibold text-[#2b1b10]">
+                    Practical remedies
+                  </div>
+                  <div className="text-[10px] text-[#8b7357]">
+                    Non-structural fixes first, structural only if really
+                    needed.
+                  </div>
+                </div>
+              </div>
 
               <h1 className="text-[20px] font-semibold tracking-tight text-[#2b1b10] sm:text-[24px]">
                 Check your home’s Vastu using your floor plan — without a site
                 visit.
               </h1>
               <p className="max-w-2xl text-[12px] leading-relaxed text-[#5f4630] sm:text-[13px]">
-  <span className="font-semibold">
-    If something feels “off” at home, it’s often a layout issue — this helps you check it quickly.
-  </span>{" "}
-  Upload your plan, set North and the centre, then tag rooms. We map each room to the{" "}
-  <span className="font-semibold">North–East–South–West energy grid</span>{" "}
-  and show a free preview first. AI is used only to assist with reading the drawing and writing the report —{" "}
-  <span className="font-semibold">Vastu verdicts follow fixed traditional rules.</span>
-</p>
+                <span className="font-semibold">
+                  If something feels “off” at home, it’s often a layout issue —
+                  this helps you check it quickly.
+                </span>{" "}
+                Upload your plan, set North and the centre, then tag rooms. We
+                map each room to the{" "}
+                <span className="font-semibold">
+                  North–East–South–West energy grid
+                </span>{" "}
+                and show a free preview first. AI is used only to assist with
+                reading the drawing and writing the report —{" "}
+                <span className="font-semibold">
+                  Vastu verdicts follow fixed traditional rules.
+                </span>
+              </p>
             </div>
 
             <div className="flex flex-col items-start gap-1.5 text-[11px] text-[#5f4630] sm:items-end">
@@ -832,7 +813,9 @@ export default function VastuPage() {
                             ref={roomsOverlayRef}
                             className={[
                               "absolute inset-0 z-30 touch-none",
-                              isDetectingRooms ? "pointer-events-none opacity-60" : "",
+                              isDetectingRooms
+                                ? "pointer-events-none opacity-60"
+                                : "",
                             ].join(" ")}
                             onPointerDown={handleRoomsBackgroundPointerDown}
                             onPointerMove={handleRoomsPointerMove}
@@ -840,9 +823,17 @@ export default function VastuPage() {
                             onPointerLeave={stopDraggingRoom}
                             onPointerCancel={stopDraggingRoom}
                           >
-<div className="absolute left-1/2 top-2 -translate-x-1/2 rounded-full bg-[#2b1b10]/90 px-3 py-1 text-[10px] text-amber-50 shadow">
-  Tap to add rooms · drag the coloured dots
-</div>
+                            <div className="absolute left-1/2 top-2 -translate-x-1/2 space-y-1">
+                              <div className="rounded-full bg-[#2b1b10]/90 px-3 py-1 text-[10px] text-amber-50 shadow">
+                                Tap to add rooms · drag the coloured dots
+                              </div>
+
+                              {lastActionHint && (
+                                <div className="mx-auto w-fit rounded-full bg-white/95 px-3 py-1 text-[10px] font-medium text-[#2b1b10] shadow ring-1 ring-amber-200">
+                                  {lastActionHint}
+                                </div>
+                              )}
+                            </div>
 
                             {rooms.map((room) => {
                               const label =
@@ -861,14 +852,7 @@ export default function VastuPage() {
                                   }}
                                 >
                                   <div
-                                    className={[
-                                      "h-4 w-4 cursor-pointer rounded-full border-2 shadow-sm shadow-amber-900/40",
-                                      room.type === "toilet"
-                                        ? "border-rose-400 bg-rose-200/90"
-                                        : room.type === "kitchen"
-                                        ? "border-amber-400 bg-amber-200/90"
-                                        : "border-emerald-400 bg-emerald-200/90",
-                                    ].join(" ")}
+                                    className="relative"
                                     onPointerDown={(e) => {
                                       e.stopPropagation();
                                       setDraggingRoomId(room.id);
@@ -877,7 +861,25 @@ export default function VastuPage() {
                                       e.stopPropagation();
                                       setDraggingRoomId(null);
                                     }}
-                                  />
+                                  >
+                                    {/* ✅ Bigger hit target (invisible) for mobile */}
+                                    <div className="absolute -inset-4" />
+
+                                    {/* ✅ Actual visible dot */}
+                                    <div
+                                      className={[
+                                        "h-4 w-4 rounded-full border-2 shadow-sm shadow-amber-900/40",
+                                        justAddedRoomFlash
+                                          ? "animate-pulse"
+                                          : "",
+                                        room.type === "toilet"
+                                          ? "border-rose-400 bg-rose-200/90"
+                                          : room.type === "kitchen"
+                                          ? "border-amber-400 bg-amber-200/90"
+                                          : "border-emerald-400 bg-emerald-200/90",
+                                      ].join(" ")}
+                                    />
+                                  </div>
                                   <div className="mt-1 rounded-full bg-[#2b1b10]/90 px-2 py-0.5 text-[9px] text-amber-50 shadow">
                                     {room.name || label}
                                   </div>
@@ -900,34 +902,36 @@ export default function VastuPage() {
                           Clear plan
                         </button>
                         {/* ✅ Detecting overlay (authentic "system working" feel) */}
-{isDetectingRooms && currentStep === "Verify Rooms" && (
-  <div className="absolute inset-0 z-[80] flex items-center justify-center bg-white/80 backdrop-blur-sm">
-    <div className="w-[92%] max-w-xl rounded-2xl border border-amber-200 bg-white px-6 py-10 text-center shadow-xl">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-emerald-500 shadow-md">
-        <span className="text-2xl text-white">⌁</span>
-      </div>
+                        {isDetectingRooms && currentStep === "Verify Rooms" && (
+                          <div className="absolute inset-0 z-[80] flex items-center justify-center bg-white/80 backdrop-blur-sm">
+                            <div className="w-[92%] max-w-xl rounded-2xl border border-amber-200 bg-white px-6 py-10 text-center shadow-xl">
+                              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-emerald-500 shadow-md">
+                                <span className="text-2xl text-white">⌁</span>
+                              </div>
 
-      <h3 className="text-[20px] font-semibold tracking-tight text-[#2b1b10]">
-        Detecting Room Labels on Floor Plan
-      </h3>
+                              <h3 className="text-[20px] font-semibold tracking-tight text-[#2b1b10]">
+                                Detecting Room Labels on Floor Plan
+                              </h3>
 
-      <p className="mt-2 text-[13px] leading-relaxed text-[#6b5340]">
-        Finding and matching room labels so we can analyse your Vastu layout accurately.
-      </p>
+                              <p className="mt-2 text-[13px] leading-relaxed text-[#6b5340]">
+                                Finding and matching room labels so we can
+                                analyse your Vastu layout accurately.
+                              </p>
 
-      {/* tiny loader */}
-      <div className="mt-6 flex items-center justify-center gap-2">
-        <span className="h-2 w-2 animate-bounce rounded-full bg-amber-500 [animation-delay:-0.2s]" />
-        <span className="h-2 w-2 animate-bounce rounded-full bg-orange-500 [animation-delay:-0.1s]" />
-        <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-500" />
-      </div>
+                              {/* tiny loader */}
+                              <div className="mt-6 flex items-center justify-center gap-2">
+                                <span className="h-2 w-2 animate-bounce rounded-full bg-amber-500 [animation-delay:-0.2s]" />
+                                <span className="h-2 w-2 animate-bounce rounded-full bg-orange-500 [animation-delay:-0.1s]" />
+                                <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-500" />
+                              </div>
 
-      <div className="mt-6 text-[11px] text-[#8b7357]">
-        Tip: Clear room names in the plan image improves detection accuracy.
-      </div>
-    </div>
-  </div>
-)}
+                              <div className="mt-6 text-[11px] text-[#8b7357]">
+                                Tip: Clear room names in the plan image improves
+                                detection accuracy.
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -955,8 +959,6 @@ export default function VastuPage() {
                     "Use AI-assisted detection or place rooms manually. You can rename rooms and adjust positions easily."}
                   {currentStep === "Vastu Summary" &&
                     "See the free preview (2 rooms) before unlocking the full Vastu blueprint."}
-                  {currentStep === "Payment" &&
-                    "Complete payment securely to download the full PDF report."}
                 </p>
               </div>
               {imageUrl && (
@@ -1032,10 +1034,12 @@ export default function VastuPage() {
                     to correct positions. Edit room names/types only if needed.
                   </p>
                   {/* ✅ Mobile-only hint */}
-<div className="sm:hidden rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-[11px] text-[#5f4630]">
-  <span className="font-semibold text-[#2b1b10]">Tip:</span> Best viewed on{" "}
-  <span className="font-semibold">desktop</span> for precise room placement.
-</div>
+                  <div className="sm:hidden rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-[11px] text-[#5f4630]">
+                    <span className="font-semibold text-[#2b1b10]">Tip:</span>{" "}
+                    Best viewed on{" "}
+                    <span className="font-semibold">desktop</span> for precise
+                    room placement.
+                  </div>
 
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <button
@@ -1167,13 +1171,6 @@ export default function VastuPage() {
                 />
               )}
 
-              {/* Payment */}
-              {currentStep === "Payment" && (
-                <PaymentStep
-                  visible={currentStep === "Payment"}
-                  summary={vastuSummary!}
-                />
-              )}
 
               {/* Upload step extra text */}
               {currentStep === "Upload Floor Plan" && (
@@ -1211,10 +1208,14 @@ export default function VastuPage() {
               </button>
             </div>
             {/* 🔥 Micro-urgency nudge */}
-<div className="mt-3 rounded-lg border border-amber-100 bg-white/70 px-3 py-2 text-[10px] text-[#7a6046]">
-  Most people run this check right before finalising construction / interiors.
-  <span className="font-semibold text-[#2b1b10]"> Doing it now prevents last-minute changes.</span>
-</div>
+            <div className="mt-3 rounded-lg border border-amber-100 bg-white/70 px-3 py-2 text-[10px] text-[#7a6046]">
+              Most people run this check right before finalising construction /
+              interiors.
+              <span className="font-semibold text-[#2b1b10]">
+                {" "}
+                Doing it now prevents last-minute changes.
+              </span>
+            </div>
 
             {/* Optional SEO text block at bottom of right panel (helps relevance) */}
             <div className="mt-3 rounded-lg border border-amber-100 bg-amber-50/60 px-3 py-2 text-[10px] text-[#7a6046]">
@@ -1228,9 +1229,6 @@ export default function VastuPage() {
         </div>
       </section>
 
-      {/* If you still inject Razorpay into a form somewhere, keep this ref around.
-          If PaymentStep handles it internally, you can delete razorpayFormRef + its effect. */}
-      <form ref={razorpayFormRef} className="hidden" />
     </main>
   );
 }

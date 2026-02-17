@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     url: "https://vastucheck.in",
     siteName: "VastuCheck.in",
     type: "website",
-    images: ["/og-image.png"],
+    images: ["https://vastucheck.in/og-image.png"]
   },
   alternates: {
     canonical: "https://vastucheck.in",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     title: "VastuCheck.in – Online Vastu Check by Floor Plan",
     description:
       "Traditional Vastu rules + tech-enabled plan reading. Get room-wise verdicts & remedies in minutes.",
-    images: ["/og-image.png"],
+      images: ["https://vastucheck.in/og-image.png"]
   },
   robots: { index: true, follow: true },
 };

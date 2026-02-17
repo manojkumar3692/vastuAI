@@ -6,7 +6,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticRoutes: Array<{
     path: string;
-    changeFrequency: NonNullable<MetadataRoute.Sitemap[number]["changeFrequency"]>;
+    changeFrequency: NonNullable<
+      MetadataRoute.Sitemap[number]["changeFrequency"]
+    >;
     priority: number;
   }> = [
     { path: "", changeFrequency: "weekly", priority: 1.0 },
@@ -16,15 +18,31 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/free-vastu-check", changeFrequency: "weekly", priority: 0.95 },
     { path: "/vastu", changeFrequency: "weekly", priority: 0.95 },
 
+    // Tier-1 buying intent pages
+    { path: "/upload-floor-plan-vastu-check", changeFrequency: "weekly", priority: 0.92 },
+    { path: "/online-vastu-report-for-home", changeFrequency: "weekly", priority: 0.9 },
+    { path: "/vastu-report-pdf-for-home", changeFrequency: "weekly", priority: 0.9 },
+    { path: "/vastu-check-for-house-plan", changeFrequency: "weekly", priority: 0.9 },
+    { path: "/ai-vastu-check-online", changeFrequency: "weekly", priority: 0.9 },
+
     // Property types
     { path: "/vastu-for-flats", changeFrequency: "monthly", priority: 0.85 },
     { path: "/vastu-for-villas", changeFrequency: "monthly", priority: 0.85 },
 
-    // Facing-direction SEO pages (HIGH ROI)
+    // Facing-direction SEO pages
     { path: "/vastu-for-east-facing-house", changeFrequency: "monthly", priority: 0.8 },
     { path: "/vastu-for-north-facing-house", changeFrequency: "monthly", priority: 0.8 },
     { path: "/vastu-for-south-facing-house", changeFrequency: "monthly", priority: 0.8 },
     { path: "/vastu-for-west-facing-house", changeFrequency: "monthly", priority: 0.8 },
+
+    // Tier-2 property-specific buyers (strong converters)
+    { path: "/vastu-for-2bhk-house", changeFrequency: "monthly", priority: 0.82 },
+    { path: "/vastu-for-3bhk-house", changeFrequency: "monthly", priority: 0.82 },
+    { path: "/vastu-for-apartment-plan", changeFrequency: "monthly", priority: 0.82 },
+    { path: "/vastu-for-house-before-construction", changeFrequency: "monthly", priority: 0.82 },
+    { path: "/vastu-for-independent-house-plan", changeFrequency: "monthly", priority: 0.82 },
+    { path: "/vastu-for-duplex-house", changeFrequency: "monthly", priority: 0.82 },
+    { path: "/vastu-for-new-house-plan", changeFrequency: "monthly", priority: 0.82 },
 
     // Trust / legal
     { path: "/contact", changeFrequency: "yearly", priority: 0.6 },
