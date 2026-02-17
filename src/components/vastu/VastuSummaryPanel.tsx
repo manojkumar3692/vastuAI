@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 import { ROOM_TYPE_LABEL } from "@/lib/templates";
 import type { VastuSummary } from "@/lib/vastuRules";
+import PaymentStep from "./PaymentStep";
 
 type Props = {
   roomsCount: number;
@@ -246,13 +247,7 @@ export default function VastuSummaryPanel({
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={onGetFullReport}
-              className="mt-3 w-full rounded-full bg-[#d97706] px-4 py-2.5 text-[12px] font-semibold text-white shadow-sm shadow-amber-500/70 hover:bg-[#c25f02]"
-            >
-              Get my full VastuCheck report for ₹49
-            </button>
+            <PaymentStep visible={true} summary={vastuSummary} />
 
             <p className="mt-1 text-center text-[10px] text-[#8b7357]">
               Secure PhonePe payment • AI-assisted reading • Based on traditional
