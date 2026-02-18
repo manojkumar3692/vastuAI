@@ -630,23 +630,37 @@ export default function HomePage() {
         </section>
 
 {/* Explore more tools & property guides */}
+{/* Explore more tools & property guides */}
 <section className="mt-10 rounded-3xl border border-amber-100 bg-white/90 px-4 py-5">
-  <h3 className="text-sm font-semibold text-amber-900">Explore Vastu tools & guides</h3>
+  <h3 className="text-sm font-semibold text-amber-900">
+    Explore Vastu tools & guides
+  </h3>
 
   <div className="mt-3 grid gap-2 text-[12px] text-amber-800 sm:grid-cols-2">
-
     {/* Tier-1 conversion pages */}
     <a href="/check-vastu-online" className="hover:underline">Check Vastu online</a>
+    <a href="/free-vastu-check" className="hover:underline">Free Vastu check</a>
     <a href="/upload-floor-plan-vastu-check" className="hover:underline">Upload floor plan for Vastu check</a>
     <a href="/online-vastu-report-for-home" className="hover:underline">Online Vastu report for home</a>
+    <a href="/vastu-check-for-house-plan" className="hover:underline">Vastu check for house plan</a>
+    <a href="/vastu-report-pdf-for-home" className="hover:underline">Vastu report PDF for home</a>
     <a href="/ai-vastu-check-online" className="hover:underline">AI Vastu check online</a>
+    <a href="/vastu" className="hover:underline">Upload floor plan & start VastuCheck →</a>
 
-    {/* Tier-2 buyer-intent pages */}
+    {/* Tier-2 buyer intent pages */}
     <a href="/vastu-for-2bhk-house" className="hover:underline">Vastu for 2BHK house</a>
     <a href="/vastu-for-3bhk-house" className="hover:underline">Vastu for 3BHK house</a>
     <a href="/vastu-for-apartment-plan" className="hover:underline">Vastu for apartment plan</a>
+    <a href="/vastu-for-house-before-construction" className="hover:underline">Vastu before construction</a>
+    <a href="/vastu-for-independent-house-plan" className="hover:underline">Vastu for independent house plan</a>
     <a href="/vastu-for-duplex-house" className="hover:underline">Vastu for duplex house</a>
+    <a href="/vastu-for-new-house-plan" className="hover:underline">Vastu for new house plan</a>
 
+    {/* Facing-direction pages */}
+    <a href="/vastu-for-east-facing-house" className="hover:underline">Vastu for east facing house</a>
+    <a href="/vastu-for-north-facing-house" className="hover:underline">Vastu for north facing house</a>
+    <a href="/vastu-for-south-facing-house" className="hover:underline">Vastu for south facing house</a>
+    <a href="/vastu-for-west-facing-house" className="hover:underline">Vastu for west facing house</a>
   </div>
 </section>
 
