@@ -70,6 +70,17 @@ export default function VastuPage() {
   const [justAddedRoomFlash, setJustAddedRoomFlash] = useState(false);
   const [lastActionHint, setLastActionHint] = useState<string>("");
 
+  const [addRoomType, setAddRoomType] = useState<RoomType | "">("");
+  const [addMode, setAddMode] = useState(false); // when true, tap places selected type
+
+  const [lastAddedRoomId, setLastAddedRoomId] = useState<string | null>(null);
+  const [planHint, setPlanHint] = useState<string>(""); // floating hint on plan
+
+  const [armedRoomType, setArmedRoomType] = useState<RoomType | "">("");
+
+  const labelForType = (t: RoomType) =>
+    ROOM_TYPE_OPTIONS.find((o) => o.value === t)?.label ?? "Room";
+
   // ✅ Vastu Summary (Step 5)
   const vastuSummary: VastuSummary | null = useMemo(() => {
     if (!imageUrl || rooms.length === 0) return null;
@@ -203,16 +214,25 @@ export default function VastuPage() {
   };
 
   // Rooms (add + drag)
-  const addRoomAt = (x: number, y: number) => {
-    const idx = rooms.length + 1;
+  const addRoomAt = (x: number, y: number, type?: RoomType) => {
+    const t: RoomType = type ?? "bedroom";
+    const label = labelForType(t);
+
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
     const newRoom: RoomPoint = {
-      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      name: `Room ${idx}`,
-      type: "bedroom",
+      id,
+      name: label,
+      type: t,
       x: clampNorm(x),
       y: clampNorm(y),
     };
+
     setRooms((prev) => [...prev, newRoom]);
+    setLastAddedRoomId(id);
+
+    setPlanHint(`${label} added. Drag to adjust or tap trash to delete.`);
+    window.setTimeout(() => setPlanHint(""), 1200);
   };
 
   const updateRoomPosition = (id: string, x: number, y: number) => {
@@ -236,24 +256,28 @@ export default function VastuPage() {
     if (draggingRoomId === id) setDraggingRoomId(null);
   };
 
-  const handleRoomsBackgroundPointerDown: React.PointerEventHandler<
-    HTMLDivElement
-  > = (e) => {
-    // ✅ Allow taps anywhere on the overlay to add a room.
-    // Room dot handlers already call stopPropagation, so they won't create new rooms.
+  const handleRoomsBackgroundPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
     const rect = getImageRect();
     if (!rect) return;
-
+  
+    if (!addMode || !addRoomType) {
+      setPlanHint("Select a room in 'Add Missing Room Labels' to place it.");
+      window.setTimeout(() => setPlanHint(""), 1200);
+      return;
+    }
+  
     const rawX = (e.clientX - rect.left) / rect.width;
     const rawY = (e.clientY - rect.top) / rect.height;
-
-    addRoomAt(rawX, rawY);
-
-    // ✅ micro-feedback so it “feels responsive”
-    setLastActionHint("Room added. Drag the dot to move it.");
-    setJustAddedRoomFlash(true);
-    window.setTimeout(() => setJustAddedRoomFlash(false), 650);
-    window.setTimeout(() => setLastActionHint(""), 1200);
+  
+    // ✅ Place once
+    addRoomAt(rawX, rawY, addRoomType);
+  
+    // ✅ IMPORTANT: disarm after 1 placement (so next click won't add again)
+    setAddMode(false);
+    setAddRoomType("");
+  
+    setPlanHint("Placed. Select again to add another room.");
+    window.setTimeout(() => setPlanHint(""), 1200);
   };
 
   const handleRoomsPointerMove: React.PointerEventHandler<HTMLDivElement> = (
@@ -459,6 +483,37 @@ export default function VastuPage() {
     }),
     []
   );
+
+  const TrashIcon = ({ className = "" }: { className?: string }) => (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M9 3h6m-8 4h10m-9 0 1 16h6l1-16"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10 11v7M14 11v7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+
+  const undoLastAdd = () => {
+    if (!lastAddedRoomId) return;
+    setRooms((prev) => prev.filter((r) => r.id !== lastAddedRoomId));
+    setLastAddedRoomId(null);
+    setPlanHint("Undone last added room.");
+    window.setTimeout(() => setPlanHint(""), 1000);
+  };
 
   // ---------- UI ----------
   return (
@@ -815,6 +870,9 @@ export default function VastuPage() {
                               isDetectingRooms
                                 ? "pointer-events-none opacity-60"
                                 : "",
+                              addMode && addRoomType
+                                ? "cursor-crosshair"
+                                : "cursor-default",
                             ].join(" ")}
                             onPointerDown={handleRoomsBackgroundPointerDown}
                             onPointerMove={handleRoomsPointerMove}
@@ -824,7 +882,7 @@ export default function VastuPage() {
                           >
                             <div className="absolute left-1/2 top-2 -translate-x-1/2 space-y-1">
                               <div className="rounded-full bg-[#2b1b10]/90 px-3 py-1 text-[10px] text-amber-50 shadow">
-                                Tap to add rooms · drag the coloured dots
+                                 Drag the coloured dots
                               </div>
 
                               {lastActionHint && (
@@ -879,8 +937,30 @@ export default function VastuPage() {
                                       ].join(" ")}
                                     />
                                   </div>
-                                  <div className="mt-1 rounded-full bg-[#2b1b10]/90 px-2 py-0.5 text-[9px] text-amber-50 shadow">
-                                    {room.name || label}
+                                  <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#2b1b10]/90 px-2 py-0.5 text-[9px] text-amber-50 shadow">
+                                    <span>{room.name || label}</span>
+
+                                    <button
+                                      type="button"
+                                      onPointerDown={(e) => e.stopPropagation()}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeRoom(room.id);
+                                        setPlanHint(
+                                          "Room deleted. You can Undo last add."
+                                        );
+                                        window.setTimeout(
+                                          () => setPlanHint(""),
+                                          1200
+                                        );
+                                      }}
+                                      className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/10 hover:bg-white/20"
+                                      aria-label="Delete room"
+                                      title="Delete"
+                                    >
+                                      {/* <TrashIcon className="h-3.5 w-3.5 text-amber-50" /> */}
+                                      X
+                                    </button>
                                   </div>
                                 </div>
                               );
@@ -889,9 +969,9 @@ export default function VastuPage() {
                         )}
 
                         {/* Status & clear */}
-                        <div className="pointer-events-none absolute left-3 bottom-3 z-40 rounded-full bg-[#2b1b10]/90 px-3 py-1 text-[10px] text-amber-50 shadow">
+                        {/* <div className="pointer-events-none absolute left-3 bottom-3 z-40 rounded-full bg-[#2b1b10]/90 px-3 py-1 text-[10px] text-amber-50 shadow">
                           {currentStep} · rotation {rotationDeg.toFixed(1)}°
-                        </div>
+                        </div> */}
 
                         <button
                           type="button"
@@ -1028,6 +1108,20 @@ export default function VastuPage() {
               {/* Verify Rooms */}
               {currentStep === "Verify Rooms" && (
                 <div className="flex h-full flex-col gap-3">
+                  {/* Floating hint on plan (SquareYards-style) */}
+                  <div className="absolute left-1/2 top-12 -translate-x-1/2 space-y-1">
+                    {addMode && addRoomType ? (
+                      <div className="rounded-full bg-emerald-600 px-3 py-1 text-[10px] font-semibold text-white shadow">
+                        Tap to place {labelForType(addRoomType as RoomType)}
+                      </div>
+                    ) : null}
+
+                    {planHint ? (
+                      <div className="mx-auto w-fit rounded-full bg-white/95 px-3 py-1 text-[10px] font-medium text-[#2b1b10] shadow ring-1 ring-amber-200">
+                        {planHint}
+                      </div>
+                    ) : null}
+                  </div>
                   <p className="text-[#8b7357]">
                     Rooms will be auto-detected. You can drag dots on the plan
                     to correct positions. Edit room names/types only if needed.
@@ -1038,6 +1132,56 @@ export default function VastuPage() {
                     Best viewed on{" "}
                     <span className="font-semibold">desktop</span> for precise
                     room placement.
+                  </div>
+
+                  <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-[11px] font-semibold text-[#2b1b10]">
+                        Add Missing Room Labels
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAddMode(false);
+                          setAddRoomType("");
+                        }}
+                        className="text-[10px] text-[#8b7357] hover:underline"
+                      >
+                        Stop adding
+                      </button>
+                    </div>
+
+                    <div className="mt-2 flex gap-2">
+                      <select
+                        value={addRoomType}
+                        onChange={(e) => {
+                          const v = e.target.value as RoomType;
+                          setAddRoomType(v);
+                          setAddMode(true);
+                          setLastActionHint(
+                            "Now tap on the plan to place this room label."
+                          );
+                          window.setTimeout(() => setLastActionHint(""), 1400);
+                        }}
+                        className="w-full rounded-md border border-amber-200 bg-white px-2 py-2 text-[11px]"
+                      >
+                        <option value="">Select a room…</option>
+                        {ROOM_TYPE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="mt-2 text-[10px] text-[#7a6046]">
+                      After selecting a room,{" "}
+                      <span className="font-semibold">
+                        tap on the floor plan
+                      </span>{" "}
+                      to place it.
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-2 sm:flex-row">
@@ -1063,6 +1207,14 @@ export default function VastuPage() {
                       className="flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-[11px] font-medium text-[#5f4630] hover:bg-amber-50 disabled:opacity-40"
                     >
                       Clear all rooms
+                    </button>
+                    <button
+                      type="button"
+                      onClick={undoLastAdd}
+                      disabled={!lastAddedRoomId}
+                      className="flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-[11px] font-medium text-[#5f4630] hover:bg-amber-50 disabled:opacity-40"
+                    >
+                      Undo last add
                     </button>
                   </div>
 
@@ -1223,7 +1375,6 @@ export default function VastuPage() {
               Upload a floor plan to preview 2 rooms free, then unlock the full
               Vastu report PDF for flats and villas.
             </div>
-            
           </div>
         </div>
       </section>
