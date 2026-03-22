@@ -78,6 +78,12 @@ export default function VastuPage() {
 
   const [armedRoomType, setArmedRoomType] = useState<RoomType | "">("");
 
+  useEffect(() => {
+    if (imageUrl && stepIndex === 0) {
+      setStepIndex(1);
+    }
+  }, [imageUrl]);
+
   const labelForType = (t: RoomType) =>
     ROOM_TYPE_OPTIONS.find((o) => o.value === t)?.label ?? "Room";
 
@@ -256,26 +262,28 @@ export default function VastuPage() {
     if (draggingRoomId === id) setDraggingRoomId(null);
   };
 
-  const handleRoomsBackgroundPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
+  const handleRoomsBackgroundPointerDown: React.PointerEventHandler<
+    HTMLDivElement
+  > = (e) => {
     const rect = getImageRect();
     if (!rect) return;
-  
+
     if (!addMode || !addRoomType) {
-      setPlanHint("Select a room in 'Add Missing Room Labels' to place it.");
-      window.setTimeout(() => setPlanHint(""), 1200);
+      setPlanHint("Select a room below — it will appear on the plan");
+      // window.setTimeout(() => setPlanHint(""), 1200);
       return;
     }
-  
+
     const rawX = (e.clientX - rect.left) / rect.width;
     const rawY = (e.clientY - rect.top) / rect.height;
-  
+
     // ✅ Place once
     addRoomAt(rawX, rawY, addRoomType);
-  
+
     // ✅ IMPORTANT: disarm after 1 placement (so next click won't add again)
     setAddMode(false);
     setAddRoomType("");
-  
+
     setPlanHint("Placed. Select again to add another room.");
     window.setTimeout(() => setPlanHint(""), 1200);
   };
@@ -316,15 +324,18 @@ export default function VastuPage() {
 
   const imbalanceCopy = useMemo(() => {
     if (!badRoomsCount) {
-      return "Good overall balance. The detailed report still helps you optimise placements and enhance positive zones.";
+      return "Your layout looks balanced. A full report will help fine-tune placements and avoid hidden issues.";
     }
+  
     if (badRoomsCount === 1) {
-      return "A single weak zone can still disturb energy flow over time. Simple, non-structural corrections are usually enough to fix it.";
+      return "One room is in a weak zone. Left unchecked, it can affect comfort over time. Easy fixes are usually possible.";
     }
+  
     if (badRoomsCount <= 3) {
-      return "Multiple rooms are sitting in weaker Vastu zones. A structured remedy plan helps you prioritise what to fix first.";
+      return "Some rooms are not ideally placed. These are common but often discovered only after moving in.";
     }
-    return "Several rooms fall in unfavourable zones. A full Vastu blueprint with room-wise corrections is strongly recommended.";
+  
+    return "Several rooms fall in unfavourable zones. This can lead to repeated issues unless corrected early.";
   }, [badRoomsCount]);
 
   // AI: detect rooms from image
@@ -413,7 +424,7 @@ export default function VastuPage() {
       "@type": "HowTo",
       name: "How to do a free Vastu check using your floor plan",
       description:
-        "Upload a floor plan, set orientation and centre, tag rooms, then view a free 2-room Vastu preview. Unlock the full PDF report for ₹49.",
+        "Upload a floor plan, set orientation and centre, tag rooms, then view a free 2-room Vastu preview. Unlock the full PDF report for ₹99.",
       step: [
         {
           "@type": "HowToStep",
@@ -443,7 +454,7 @@ export default function VastuPage() {
         {
           "@type": "HowToStep",
           name: "Unlock full report",
-          text: "Pay ₹49 securely and download the full PDF report.",
+          text: "Pay ₹99 securely and download the full PDF report.",
         },
       ],
     }),
@@ -460,7 +471,7 @@ export default function VastuPage() {
           name: "Is VastuCheck free?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Yes. You get a free Vastu preview for the first 2 rooms. The complete room-by-room PDF report can be unlocked for ₹49.",
+            text: "Yes. You get a free Vastu preview for the first 2 rooms. The complete room-by-room PDF report can be unlocked for ₹99.",
           },
         },
         {
@@ -569,7 +580,7 @@ export default function VastuPage() {
 
           <div className="hidden flex-col items-end text-[11px] sm:flex">
             <span className="rounded-full bg-emerald-100/80 px-3 py-0.5 text-[10px] font-medium text-emerald-800 ring-1 ring-emerald-400/60">
-              Free preview: 2 rooms · Full report ₹49
+              Free preview: 2 rooms · Full report ₹99
             </span>
             <span className="mt-1 text-[10px] text-amber-800/70">
               We don’t store your plan • Payments handled securely
@@ -581,13 +592,36 @@ export default function VastuPage() {
       {/* MAIN SECTION */}
       <section className="mx-auto max-w-6xl px-4 pt-5 pb-10 sm:pt-7 sm:pb-14">
         {/* Hero band */}
-        <div className="mb-5 rounded-2xl border border-amber-100/80 bg-gradient-to-r from-amber-50 via-orange-50 to-emerald-50 px-4 py-3 sm:px-5 sm:py-4">
+        {/* 🔥 MOBILE HERO (SHORT & CONVERSION FOCUSED) */}
+        {/* <div className="sm:hidden mb-4">
+          <h1 className="text-[18px] font-semibold text-[#2b1b10] leading-tight">
+            Check your home’s Vastu before it becomes expensive to fix
+          </h1>
+
+          <p className="text-[12px] text-[#5f4630] mt-1">
+            Small layout mistakes can cost ₹50K+ later. This takes 2 minutes.
+          </p>
+
+          <div className="mt-2 text-[11px] text-emerald-700 font-medium">
+            ✔ 2 rooms free • Full report ₹99 • No login
+          </div>
+        </div>
+        <div className="sm:hidden grid grid-cols-1 gap-2 mb-4">
+          <div className="text-[11px] text-[#5f4630]">
+            • Works for flats, villas & plots
+          </div>
+          <div className="text-[11px] text-[#5f4630]">
+            • Practical remedies (no demolition first)
+          </div>
+        </div> */}
+
+        <div className="hidden sm:block mb-5 rounded-2xl border border-amber-100/80 bg-gradient-to-r from-amber-50 via-orange-50 to-emerald-50 px-4 py-3 sm:px-5 sm:py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1.5">
               {/* ✅ Updated for SEO + conversion */}
               <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[10px] font-medium text-amber-800 ring-1 ring-amber-300/70">
                 <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                Free Vastu Check (2 rooms free) · Unlock full PDF for ₹49
+                Free Vastu Check (2 rooms free) · Unlock full PDF for ₹99
               </div>
 
               {/* 🔥 Emotion + urgency (soft, not fear-mongering) */}
@@ -882,7 +916,7 @@ export default function VastuPage() {
                           >
                             <div className="absolute left-1/2 top-2 -translate-x-1/2 space-y-1">
                               <div className="rounded-full bg-[#2b1b10]/90 px-3 py-1 text-[10px] text-amber-50 shadow">
-                                 Drag the coloured dots
+                                Drag the coloured dots
                               </div>
 
                               {lastActionHint && (
@@ -1035,7 +1069,9 @@ export default function VastuPage() {
                   {currentStep === "Set Centre" &&
                     "Tap the Brahmasthan – the approximate centre of your built-up structure. This helps map each room to its Vastu zone."}
                   {currentStep === "Verify Rooms" &&
-                    "Use AI-assisted detection or place rooms manually. You can rename rooms and adjust positions easily."}
+                    <p className="text-[11px] text-[#8b7357]">
+                    Adjust if needed — nearby placement is enough
+                  </p>}
                   {currentStep === "Vastu Summary" &&
                     "See the free preview (2 rooms) before unlocking the full Vastu blueprint."}
                 </p>
@@ -1052,56 +1088,72 @@ export default function VastuPage() {
               {/* Orientation controls */}
               {currentStep === "Set Orientation" && (
                 <div className="space-y-3">
-                  <p className="text-[#8b7357]">
-                    Use the buttons below to rotate your plan until any North
-                    arrow or text matches the compass overlay.
+                  {/* 🔥 Super short hook */}
+                  <p className="text-[12px] font-medium text-[#2b1b10]">
+                    Align your plan with North
                   </p>
-                  <div className="flex flex-col gap-2 sm:flex-row">
+
+                  {/* 👇 Simple instruction */}
+                  <p className="text-[11px] text-[#8b7357]">
+                    Rotate until your plan matches the circle. Rough alignment
+                    is enough.
+                  </p>
+
+                  {/* 👇 Buttons 50-50 (important UX fix) */}
+                  <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={rotateLeft}
                       disabled={!imageUrl}
-                      className="flex-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-medium text-[#5f4630] hover:bg-amber-100 disabled:opacity-40"
+                      className="w-1/2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-medium text-[#5f4630] hover:bg-amber-100 disabled:opacity-40"
                     >
-                      ⟲ Rotate Left (22.5°)
+                      ⟲ Left
                     </button>
+
                     <button
                       type="button"
                       onClick={rotateRight}
                       disabled={!imageUrl}
-                      className="flex-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-medium text-[#5f4630] hover:bg-amber-100 disabled:opacity-40"
+                      className="w-1/2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-medium text-[#5f4630] hover:bg-amber-100 disabled:opacity-40"
                     >
-                      ⟳ Rotate Right (22.5°)
+                      ⟳ Right
                     </button>
                   </div>
-                  <div className="text-[11px] text-[#8b7357]">
-                    Current rotation:{" "}
-                    <span className="font-semibold text-[#2b1b10]">
-                      {rotationDeg.toFixed(1)}°
-                    </span>
+
+                  {/* 👇 Confidence + skip */}
+                  <div className="text-[10px] text-emerald-700">
+                    ✔ Not exact? No problem — results still work
+                  </div>
+
+                  {/* 👇 Optional (keep small) */}
+                  <div className="text-[10px] text-[#8b7357]">
+                    Rotation: {rotationDeg.toFixed(1)}°
                   </div>
                 </div>
               )}
 
               {/* Set Centre */}
               {currentStep === "Set Centre" && (
-                <div className="space-y-2">
-                  <p className="text-[#8b7357]">
-                    Tap roughly at the physical centre of your main built-up
-                    area (ignore separate garden / open land). You can adjust
-                    until it visually feels right.
+                <div className="space-y-3">
+                  {/* 🔥 Hook */}
+                  <p className="text-[12px] font-medium text-[#2b1b10]">
+                    Set the center of your home
                   </p>
-                  <div className="rounded-lg border border-amber-100 bg-amber-50/60 px-3 py-2 text-[11px] text-[#5f4630]">
-                    Approx centre:{" "}
-                    <span className="font-semibold">
-                      x {(centre.x * 100).toFixed(0)}%, y{" "}
-                      {(centre.y * 100).toFixed(0)}%
-                    </span>
+
+                  {/* 👇 Action instruction */}
+                  <p className="text-[11px] text-[#8b7357]">
+                    Tap roughly at the middle of your floor plan.
+                  </p>
+
+                  {/* 👇 Confidence */}
+                  <div className="text-[10px] text-emerald-700">
+                    ✔ Doesn’t need to be exact
                   </div>
-                  <p className="text-[10px] text-[#a58b6e]">
-                    The centre helps us know which rooms are in NE, SE, SW, NW
-                    etc according to classical Vastu mandala.
-                  </p>
+
+                  {/* 👇 Micro help */}
+                  <div className="text-[10px] text-[#8b7357]">
+                    Ignore balconies / open areas — focus on main built space
+                  </div>
                 </div>
               )}
 
@@ -1112,7 +1164,7 @@ export default function VastuPage() {
                   <div className="absolute left-1/2 top-12 -translate-x-1/2 space-y-1">
                     {addMode && addRoomType ? (
                       <div className="rounded-full bg-emerald-600 px-3 py-1 text-[10px] font-semibold text-white shadow">
-                        Tap to place {labelForType(addRoomType as RoomType)}
+                        Select a room — it will appear on the plan
                       </div>
                     ) : null}
 
@@ -1122,17 +1174,16 @@ export default function VastuPage() {
                       </div>
                     ) : null}
                   </div>
-                  <p className="text-[#8b7357]">
-                    Rooms will be auto-detected. You can drag dots on the plan
-                    to correct positions. Edit room names/types only if needed.
+                  <p className="text-[11px] text-[#8b7357]">
+                  Add missing rooms if needed.
                   </p>
                   {/* ✅ Mobile-only hint */}
-                  <div className="sm:hidden rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-[11px] text-[#5f4630]">
+                  {/* <div className="sm:hidden rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-[11px] text-[#5f4630]">
                     <span className="font-semibold text-[#2b1b10]">Tip:</span>{" "}
                     Best viewed on{" "}
                     <span className="font-semibold">desktop</span> for precise
                     room placement.
-                  </div>
+                  </div> */}
 
                   <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-3">
                     <div className="flex items-center justify-between gap-2">
@@ -1157,12 +1208,19 @@ export default function VastuPage() {
                         value={addRoomType}
                         onChange={(e) => {
                           const v = e.target.value as RoomType;
-                          setAddRoomType(v);
-                          setAddMode(true);
-                          setLastActionHint(
-                            "Now tap on the plan to place this room label."
-                          );
-                          window.setTimeout(() => setLastActionHint(""), 1400);
+                        
+                          if (!v) return;
+                        
+                          // ✅ instantly place in center
+                          addRoomAt(0.5, 0.5, v);
+                        
+                          // ❌ disable add mode (no tap needed)
+                          setAddMode(false);
+                          setAddRoomType("");
+                        
+                          // ✅ feedback
+                          setPlanHint(`${labelForType(v)} added. Drag to adjust.`);
+                          window.setTimeout(() => setPlanHint(""), 1200);
                         }}
                         className="w-full rounded-md border border-amber-200 bg-white px-2 py-2 text-[11px]"
                       >
@@ -1178,13 +1236,12 @@ export default function VastuPage() {
                     <div className="mt-2 text-[10px] text-[#7a6046]">
                       After selecting a room,{" "}
                       <span className="font-semibold">
-                        tap on the floor plan
+                        It gets placed in the iamge
                       </span>{" "}
-                      to place it.
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2 sm:flex-row">
+                  <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={handleAutoDetectRooms}
@@ -1207,14 +1264,6 @@ export default function VastuPage() {
                       className="flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-[11px] font-medium text-[#5f4630] hover:bg-amber-50 disabled:opacity-40"
                     >
                       Clear all rooms
-                    </button>
-                    <button
-                      type="button"
-                      onClick={undoLastAdd}
-                      disabled={!lastAddedRoomId}
-                      className="flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-[11px] font-medium text-[#5f4630] hover:bg-amber-50 disabled:opacity-40"
-                    >
-                      Undo last add
                     </button>
                   </div>
 
@@ -1311,6 +1360,7 @@ export default function VastuPage() {
 
               {/* Vastu Summary */}
               {currentStep === "Vastu Summary" && (
+                <>
                 <VastuSummaryPanel
                   roomsCount={rooms.length}
                   vastuSummary={vastuSummary}
@@ -1320,6 +1370,14 @@ export default function VastuPage() {
                   lockedRooms={lockedRooms}
                   onGetFullReport={goNext}
                 />
+                <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-2 text-[11px] text-[#2b1b10]">
+  ₹99 now can prevent ₹50K+ changes later
+</div>
+<div className="text-[10px] text-[#8b7357] text-center mt-1">
+  Used by 1,000+ homeowners before interiors
+</div>
+                </>
+                
               )}
 
               {/* Upload step extra text */}

@@ -79,12 +79,21 @@ export default function VastuSummaryPanel({
         <p className="mt-1 text-[10px] text-[#8b5b1a]">{imbalanceCopy}</p>
       </div>
 
+      <div className="rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-[11px] text-[#5f4630]">
+  <span className="font-semibold text-[#2b1b10]">
+    You’re seeing only a partial preview
+  </span>
+  <div className="mt-1 text-[10px] text-[#7a6046]">
+    Full report shows all rooms + exact corrections
+  </div>
+</div>
+
       {/* Free preview */}
       <div className="rounded-2xl border border-amber-200 bg-[#fdf7ee] px-3 py-3 shadow-sm">
         <div className="flex items-center justify-between gap-2">
           <div className="space-y-0.5">
             <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">
-              Free preview
+            Preview (2 rooms unlocked)
             </div>
             <div className="text-[12px] font-semibold text-[#2b1b10]">
               First {visibleRooms.length} rooms fully unlocked
@@ -101,7 +110,7 @@ export default function VastuSummaryPanel({
             </span>
             {lockedRooms.length > 0 && (
               <span className="rounded-full bg-white px-2 py-0.5 text-[9px] text-[#8b7357] ring-1 ring-amber-100">
-                {lockedRooms.length} more rooms in full report
+                {lockedRooms.length} rooms not yet analysed
               </span>
             )}
           </div>
@@ -155,7 +164,7 @@ export default function VastuSummaryPanel({
                       <span className="font-semibold">{r.direction}</span>
                     </span>
                     <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-medium text-emerald-900">
-                      Free insight
+                    Preview insight
                     </span>
                   </div>
                 </div>
@@ -187,6 +196,7 @@ export default function VastuSummaryPanel({
       {/* FULL REPORT OFFER */}
       <section className="mt-4 rounded-3xl border border-amber-100 bg-white/95 shadow-md shadow-amber-100/70">
         <div className="grid gap-4 md:grid-cols-[1.7fr,1.3fr] md:items-center">
+          
           {/* Right: price card + timer */}
           <div className="flex flex-col justify-between rounded-2xl bg-[#fff8ea] p-3 ring-1 ring-amber-200 sm:p-4">
             <div className="flex items-start justify-between gap-3">
@@ -195,7 +205,7 @@ export default function VastuSummaryPanel({
                   Launch Offer
                 </p>
                 <p className="mt-1 text-sm font-semibold text-[#2b1b10]">
-                  Full VastuCheck blueprint for this floor plan
+                  Full Vastu blueprint for this floor plan
                 </p>
                 <p className="mt-1 text-[11px] text-[#8b7357]">
                   One-time fee • per layout • no subscription
@@ -207,7 +217,7 @@ export default function VastuSummaryPanel({
                     ₹ 499
                   </div>
                   <div className="text-[18px] font-bold text-[#d97706] leading-tight">
-                    ₹ 49
+                    ₹ 99
                   </div>
                   <div className="text-[9px] text-[#8b7357]">
                     Introductory price
@@ -247,19 +257,22 @@ export default function VastuSummaryPanel({
               </div>
             </div>
 
-            <PaymentStep visible={true} summary={vastuSummary} />
+            
 
+            <PaymentStep visible={true} summary={vastuSummary} />
             <p className="mt-1 text-center text-[10px] text-[#8b7357]">
-              Secure PhonePe payment • AI-assisted reading • Based on traditional
-              Vastu rules.
-            </p>
+  Used by 1,000+ homeowners • Secure PhonePe payment • Traditional Vastu rules
+</p>
           </div>
 
           {/* Left: copy */}
           <div className="space-y-2 p-2">
             <h3 className="text-base font-semibold text-[#2b1b10] sm:text-lg">
-              Fix your home’s Vastu issues before they become costly mistakes.
+            Fix layout mistakes now — before they become expensive to change later.
             </h3>
+            <p className="text-[11px] text-emerald-700 font-medium">
+  ₹99 now can prevent ₹50K+ changes later
+</p>
             <p className="text-[12px] text-[#8b7357] sm:text-[13px]">
               Unlock your complete{" "}
               <span className="font-semibold text-[#2b1b10]">VastuCheck report</span>{" "}
