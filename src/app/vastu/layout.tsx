@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title:
     "Free Vastu Check Online (2 Rooms Free) | VastuCheck.in – Floor Plan Vastu Report",
   description:
-    "Upload your floor plan and get a free Vastu check preview (2 rooms). Unlock the full room-by-room Vastu report PDF for ₹49. Works for flats & villas.",
+    "Upload your floor plan and get a free Vastu check preview (2 rooms). Unlock the full room-by-room Vastu report PDF for ₹99. Works for flats & villas.",
   alternates: { canonical: "/vastu" },
 
   robots: {
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Free Vastu Check Online (2 Rooms Free) | VastuCheck.in",
     description:
-      "Upload your floor plan, get a free Vastu preview (2 rooms), then unlock the full PDF report for ₹49.",
+      "Upload your floor plan, get a free Vastu preview (2 rooms), then unlock the full PDF report for ₹99.",
     url: "/vastu",
     siteName: "VastuCheck.in",
     type: "website",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Free Vastu Check Online (2 Rooms Free) | VastuCheck.in",
     description:
-      "Upload your floor plan, get a free Vastu preview (2 rooms), then unlock the full PDF report for ₹49.",
+      "Upload your floor plan, get a free Vastu preview (2 rooms), then unlock the full PDF report for ₹99.",
     images: ["/og/vastucheck-vastu.png"],
   },
 

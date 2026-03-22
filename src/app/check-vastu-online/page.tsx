@@ -105,7 +105,7 @@ export default function CheckVastuOnlinePage() {
     offers: {
       "@type": "Offer",
       url: "https://vastucheck.in/vastu",
-      price: "49",
+      price: "99",
       priceCurrency: "INR",
       availability: "https://schema.org/InStock",
     },

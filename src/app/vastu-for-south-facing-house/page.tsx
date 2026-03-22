@@ -159,7 +159,7 @@ export default function SouthFacingHousePage() {
             </a>
 
             <div className="text-[12px] text-[#7c5b2e]">
-              Free preview: 2 rooms • Full report ₹49
+              Free preview: 2 rooms • Full report ₹99
             </div>
           </div>
 
