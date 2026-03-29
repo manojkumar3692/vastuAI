@@ -165,6 +165,12 @@ export default function VastuFor2BHKPage() {
                 <strong className="font-semibold text-[#b45309]"> Vastu score + room-wise verdicts</strong>{" "}
                 with practical remedies. Share the PDF with your family or architect.
               </p>
+              <p className="max-w-xl text-[14px] text-[#5a4a36]">
+If you are searching for <strong>Vastu for 2BHK flat</strong> or 
+<strong>2BHK apartment Vastu</strong>, the key factors include kitchen direction,
+master bedroom placement, toilet zones and entrance location. A floor-plan based
+Vastu check gives a clearer answer than general tips, especially for compact 2BHK layouts.
+</p>
             </div>
 
             <div className="grid gap-4 text-xs text-[#3f3a34] sm:grid-cols-3 sm:text-sm">
@@ -222,6 +228,15 @@ export default function VastuFor2BHKPage() {
               <span className="h-3 w-px bg-amber-200" />
               <span>Digital blueprint • Sharable PDF</span>
             </div>
+            <div className="flex flex-wrap items-center gap-3 pt-3 text-[11px] text-[#7a5d3a] sm:text-[12px]">
+  <span>Useful before construction or renovation</span>
+  <span className="h-3 w-px bg-amber-200" />
+  <span>Digital blueprint • Sharable PDF</span>
+</div>
+
+<p className="text-[12px] text-[#7a5d3a]">
+  Most searched: 2BHK Vastu for east-facing, north-facing & apartment layouts.
+</p>
           </div>
 
           {/* RIGHT CARD */}
@@ -312,8 +327,18 @@ export default function VastuFor2BHKPage() {
             <div>
               <h3 className="text-sm font-semibold">Common 2BHK checks</h3>
               <ul className="mt-2 space-y-1.5 text-[12px] text-[#5a4a36] sm:text-[13px]">
-                <li>• Kitchen zone (SE preference)</li>
-                <li>• Master bedroom zone (SW preference)</li>
+              <li>
+• Kitchen zone (SE preference)
+<a href="/vastu-for-kitchen-direction" className="text-emerald-700 underline ml-1">
+(kitchen Vastu rules)
+</a>
+</li>
+<li>
+• Master bedroom zone (SW preference)
+<a href="/vastu-for-bedroom" className="text-emerald-700 underline ml-1">
+(bedroom Vastu guide)
+</a>
+</li>
                 <li>• Toilets (avoid NE; remedies if unavoidable)</li>
                 <li>• Main entrance zone</li>
                 <li>• Centre (Brahmasthan) openness</li>
@@ -340,6 +365,27 @@ export default function VastuFor2BHKPage() {
             </p>
           </div>
         </section>
+
+        <section className="mt-10 rounded-3xl border border-amber-100 bg-white px-4 py-5">
+  <h3 className="text-sm font-semibold text-[#2b1b10]">
+    Explore more Vastu guides
+  </h3>
+
+  <div className="mt-3 grid gap-2 text-[12px] text-[#5a4a36] sm:grid-cols-2">
+    <a href="/vastu-for-flats" className="hover:underline">
+      Vastu for flats & apartments
+    </a>
+    <a href="/vastu-for-3bhk-house" className="hover:underline">
+      Vastu for 3BHK house
+    </a>
+    <a href="/vastu-for-north-facing-house" className="hover:underline">
+      North-facing house Vastu
+    </a>
+    <a href="/vastu-check-for-house-plan" className="hover:underline">
+      Vastu check by floor plan
+    </a>
+  </div>
+</section>
 
         {/* FOOTER */}
         <footer className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-amber-100 pt-4 text-[11px] text-[#8b7357] sm:text-[12px]">

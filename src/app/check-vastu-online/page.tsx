@@ -111,6 +111,24 @@ export default function CheckVastuOnlinePage() {
     },
   };
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://vastucheck.in"
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Check Vastu Online",
+        item: "https://vastucheck.in/check-vastu-online"
+      }
+    ]
+  };
   return (
     <main className="min-h-screen bg-amber-50 text-slate-800">
       {/* soft background aura */}
@@ -129,6 +147,11 @@ export default function CheckVastuOnlinePage() {
         suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
       />
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+/>
 
       <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-10 pt-6 sm:px-6 lg:px-8">
         {/* NAVBAR */}
@@ -385,9 +408,15 @@ export default function CheckVastuOnlinePage() {
               practical language.
             </p>
             <p className="mb-2">
-              You get guidance on key rooms like{" "}
-              <strong>main entrance, kitchen, bedrooms, toilets and pooja</strong>{" "}
-              along with a priority list of remedies.
+            You get guidance on key rooms like 
+main entrance, kitchen, bedrooms, toilets and pooja.
+
+For deeper guidance, you can also explore:
+<ul className="mt-2 list-disc pl-5">
+  <li><a href="/vastu-for-2bhk-house" className="text-emerald-700 underline">Vastu for 2BHK house</a></li>
+  <li><a href="/vastu-for-flats" className="text-emerald-700 underline">Vastu for flats & apartments</a></li>
+  <li><a href="/vastu-for-north-facing-house" className="text-emerald-700 underline">North-facing house Vastu rules</a></li>
+</ul>
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <a
@@ -409,6 +438,12 @@ export default function CheckVastuOnlinePage() {
             <h2 className="font-display text-lg font-semibold text-amber-900 mb-2">
               Online Vastu check using floor plan
             </h2>
+            <p className="mt-2">
+Compared to generic advice, a floor-plan based Vastu check gives accurate, direction-wise clarity.
+Whether you live in a <a href="/vastu-for-flats" className="text-emerald-700 underline">flat</a>,
+independent house, or are evaluating a <a href="/vastu-for-2bhk-house" className="text-emerald-700 underline">2BHK layout</a>,
+this method ensures each room is analysed based on its exact position in the Vastu grid.
+</p>
             <p className="mb-2">
               An <strong>online Vastu check</strong> is most useful when you
               want speed + documentation. Instead of generic advice, a plan-based
