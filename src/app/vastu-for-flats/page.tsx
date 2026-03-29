@@ -65,8 +65,7 @@ export default function VastuForFlatsPage() {
         name: "Is Vastu different for flats vs independent houses?",
         acceptedAnswer: {
           "@type": "Answer",
-          text:
-            "Base principles are the same – directions, elements and room placement. The difference is practicality. In flats you cannot move walls, so Vastu for flats focuses more on usage, furniture and subtle corrections instead of demolition. VastuCheck is designed with this reality in mind.",
+          text: "Base principles are the same – directions, elements and room placement. The difference is practicality. In flats you cannot move walls, so Vastu for flats focuses more on usage, furniture and subtle corrections instead of demolition. VastuCheck is designed with this reality in mind.",
         },
       },
       {
@@ -74,8 +73,7 @@ export default function VastuForFlatsPage() {
         name: "Can I use VastuCheck for a rented apartment?",
         acceptedAnswer: {
           "@type": "Answer",
-          text:
-            "Yes. Many users are tenants who want peace of mind without major changes. The report highlights what you can change easily today – bed placement, storage, colours and usage of certain corners, etc.",
+          text: "Yes. Many users are tenants who want peace of mind without major changes. The report highlights what you can change easily today – bed placement, storage, colours and usage of certain corners, etc.",
         },
       },
       {
@@ -83,8 +81,7 @@ export default function VastuForFlatsPage() {
         name: "Does VastuCheck work for 1BHK, 2BHK and 3BHK flats?",
         acceptedAnswer: {
           "@type": "Answer",
-          text:
-            "Yes. VastuCheck works for 1BHK, 2BHK and 3BHK flats. You upload your floor plan, mark rooms on the grid, and the report explains each room’s direction, verdict and practical remedies.",
+          text: "Yes. VastuCheck works for 1BHK, 2BHK and 3BHK flats. You upload your floor plan, mark rooms on the grid, and the report explains each room’s direction, verdict and practical remedies.",
         },
       },
       {
@@ -92,8 +89,7 @@ export default function VastuForFlatsPage() {
         name: "What do I need to run a Vastu check for my flat?",
         acceptedAnswer: {
           "@type": "Answer",
-          text:
-            "A clear 2D floor plan image (JPG/PNG) is enough. Builder brochures, architect drawings and clean hand sketches work well. You then set orientation, centre, and verify room markers.",
+          text: "A clear 2D floor plan image (JPG/PNG) is enough. Builder brochures, architect drawings and clean hand sketches work well. You then set orientation, centre, and verify room markers.",
         },
       },
     ],
@@ -346,9 +342,25 @@ export default function VastuForFlatsPage() {
               </h3>
               <ul className="mt-2 space-y-1.5 text-[12px] text-[#5a4a36] sm:text-[13px]">
                 <li>• Is my flat main door in an auspicious zone?</li>
-                <li>• Is the kitchen in the right Vastu direction?</li>
+                <li>
+                  • Is the kitchen in the right Vastu direction?
+                  <a
+                    href="/vastu-for-kitchen-direction"
+                    className="text-emerald-700 underline ml-1"
+                  >
+                    (Read kitchen Vastu rules)
+                  </a>
+                </li>
                 <li>• What if toilet is in North-East or South-West?</li>
-                <li>• Where should I place bed in a compact bedroom?</li>
+                <li>
+                  • Where should I place bed in a compact bedroom?
+                  <a
+                    href="/vastu-for-bedroom"
+                    className="text-emerald-700 underline ml-1"
+                  >
+                    (Bedroom Vastu guide)
+                  </a>
+                </li>
                 <li>• How to balance Vastu in a rented flat?</li>
               </ul>
             </div>
@@ -444,6 +456,27 @@ export default function VastuForFlatsPage() {
             </a>
           </div>
         </footer>
+
+        <section className="mt-10 rounded-3xl border border-amber-100 bg-white px-4 py-5">
+  <h3 className="text-sm font-semibold text-[#2b1b10]">
+    Related Vastu guides for your home
+  </h3>
+
+  <div className="mt-3 grid gap-2 text-[12px] text-[#5a4a36] sm:grid-cols-2">
+    <a href="/vastu-for-2bhk-house" className="hover:underline">
+      Vastu for 2BHK house
+    </a>
+    <a href="/vastu-for-3bhk-house" className="hover:underline">
+      Vastu for 3BHK house
+    </a>
+    <a href="/vastu-for-north-facing-house" className="hover:underline">
+      North-facing house Vastu
+    </a>
+    <a href="/vastu-for-east-facing-house" className="hover:underline">
+      East-facing house Vastu
+    </a>
+  </div>
+</section>
       </div>
     </main>
   );
