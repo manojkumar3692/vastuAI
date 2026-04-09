@@ -84,7 +84,16 @@ export default function PaymentSuccessPage() {
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
+     // 🔥 TRACK PURCHASE EVENT
+  if (typeof window !== "undefined" && window.fbq) {
+    window.fbq("track", "Purchase", {
+      value: 99,
+      currency: "INR",
+    });
+  }
     downloadPdf();
+
+    
 
     return () => abortRef.current?.abort();
   }, []);

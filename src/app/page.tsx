@@ -1,4 +1,5 @@
 // src/app/page.tsx
+import VastuCTA from "@/components/vastu/VastuCTA";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -315,15 +316,14 @@ export default function HomePage() {
 
             {/* CTA buttons */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <a
-                href="/vastu"
+              <VastuCTA 
                 className="group inline-flex items-center justify-center rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-emerald-500 px-7 py-3 text-sm sm:text-base font-semibold text-white shadow-md shadow-amber-400/70 transition hover:brightness-110"
               >
                 Upload floor plan & start VastuCheck
                 <span className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-[11px] text-amber-700 group-hover:translate-x-0.5 transition-transform">
                   →
                 </span>
-              </a>
+              </VastuCTA>
 
               <a
                 href="#how-it-works"
