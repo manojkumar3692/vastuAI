@@ -56,8 +56,7 @@ export default function VastuFor2BHKPage() {
         name: "What rooms are typically checked in a 2BHK Vastu report?",
         acceptedAnswer: {
           "@type": "Answer",
-          text:
-            "A 2BHK Vastu report typically checks the main entrance, living area, kitchen, master bedroom, second bedroom, toilets, pooja space (if any) and the Brahmasthan (centre).",
+          text: "A 2BHK Vastu report typically checks the main entrance, living area, kitchen, master bedroom, second bedroom, toilets, pooja space (if any) and the Brahmasthan (centre).",
         },
       },
       {
@@ -65,8 +64,7 @@ export default function VastuFor2BHKPage() {
         name: "Does this work for 2BHK flats and 2BHK independent houses?",
         acceptedAnswer: {
           "@type": "Answer",
-          text:
-            "Yes. Upload a clear 2D floor plan, set the correct North orientation and centre, then tag rooms. The engine maps each room into NE/SE/SW/NW zones and produces a score and verdicts.",
+          text: "Yes. Upload a clear 2D floor plan, set the correct North orientation and centre, then tag rooms. The engine maps each room into NE/SE/SW/NW zones and produces a score and verdicts.",
         },
       },
       {
@@ -74,8 +72,7 @@ export default function VastuFor2BHKPage() {
         name: "Can I use this before finalising my 2BHK plan with an architect?",
         acceptedAnswer: {
           "@type": "Answer",
-          text:
-            "Yes. The best time to run a Vastu check is before construction or major renovation so you can adjust room placements early and avoid costly changes later.",
+          text: "Yes. The best time to run a Vastu check is before construction or major renovation so you can adjust room placements early and avoid costly changes later.",
         },
       },
       {
@@ -83,8 +80,7 @@ export default function VastuFor2BHKPage() {
         name: "Do I need a Vastu consultant after this report?",
         acceptedAnswer: {
           "@type": "Answer",
-          text:
-            "Many people use the PDF report as a practical guide. If you want deeper consultation, you can share the structured PDF with a Vastu consultant or architect to discuss changes.",
+          text: "Many people use the PDF report as a practical guide. If you want deeper consultation, you can share the structured PDF with a Vastu consultant or architect to discuss changes.",
         },
       },
     ],
@@ -119,10 +115,16 @@ export default function VastuFor2BHKPage() {
           </div>
 
           <nav className="hidden items-center gap-4 text-xs sm:flex">
-            <a href="/" className="text-[11px] text-[#6b5340] hover:text-[#b65c10]">
+            <a
+              href="/"
+              className="text-[11px] text-[#6b5340] hover:text-[#b65c10]"
+            >
               Home
             </a>
-            <a href="/vastu" className="text-[11px] text-[#6b5340] hover:text-[#b65c10]">
+            <a
+              href="/vastu"
+              className="text-[11px] text-[#6b5340] hover:text-[#b65c10]"
+            >
               Start VastuCheck
             </a>
             <a
@@ -137,7 +139,10 @@ export default function VastuFor2BHKPage() {
             >
               Vastu for Villas
             </a>
-            <a href="/contact" className="text-[11px] text-[#6b5340] hover:text-[#b65c10]">
+            <a
+              href="/contact"
+              className="text-[11px] text-[#6b5340] hover:text-[#b65c10]"
+            >
               Contact
             </a>
           </nav>
@@ -148,7 +153,9 @@ export default function VastuFor2BHKPage() {
           <div className="space-y-7">
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/80 px-4 py-1.5 text-xs text-[#8b5a1b] shadow-sm shadow-amber-100 sm:text-sm">
               <span className="inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-              <span>2BHK Vastu check • Room-wise verdicts • Downloadable PDF</span>
+              <span>
+                2BHK Vastu check • Room-wise verdicts • Downloadable PDF
+              </span>
             </div>
 
             <div className="space-y-4">
@@ -160,17 +167,24 @@ export default function VastuFor2BHKPage() {
                 using your floor plan.
               </h1>
               <p className="max-w-xl text-[14px] leading-relaxed text-[#5a4a36] sm:text-[15px]">
-                Upload your 2BHK floor plan, set North and the centre, then tag your rooms.
-                VastuCheck maps each room into NE/SE/SW/NW zones and generates a
-                <strong className="font-semibold text-[#b45309]"> Vastu score + room-wise verdicts</strong>{" "}
-                with practical remedies. Share the PDF with your family or architect.
+                Upload your 2BHK floor plan, set North and the centre, then tag
+                your rooms. VastuCheck maps each room into NE/SE/SW/NW zones and
+                generates a
+                <strong className="font-semibold text-[#b45309]">
+                  {" "}
+                  Vastu score + room-wise verdicts
+                </strong>{" "}
+                with practical remedies. Share the PDF with your family or
+                architect.
               </p>
               <p className="max-w-xl text-[14px] text-[#5a4a36]">
-If you are searching for <strong>Vastu for 2BHK flat</strong> or 
-<strong>2BHK apartment Vastu</strong>, the key factors include kitchen direction,
-master bedroom placement, toilet zones and entrance location. A floor-plan based
-Vastu check gives a clearer answer than general tips, especially for compact 2BHK layouts.
-</p>
+                If you are searching for <strong>Vastu for 2BHK flat</strong> or
+                <strong>2BHK apartment Vastu</strong>, the key factors include
+                kitchen direction, master bedroom placement, toilet zones and
+                entrance location. A floor-plan based Vastu check gives a
+                clearer answer than general tips, especially for compact 2BHK
+                layouts.
+              </p>
             </div>
 
             <div className="grid gap-4 text-xs text-[#3f3a34] sm:grid-cols-3 sm:text-sm">
@@ -178,7 +192,9 @@ Vastu check gives a clearer answer than general tips, especially for compact 2BH
                 <p className="mb-1 text-[10px] uppercase tracking-[0.18em] text-[#b65c10]/80">
                   Best for
                 </p>
-                <p className="text-lg font-semibold text-[#166534]">2BHK layout</p>
+                <p className="text-lg font-semibold text-[#166534]">
+                  2BHK layout
+                </p>
                 <p className="mt-1 text-[12px] text-[#6b5340]">
                   Works for flats and independent 2BHK houses.
                 </p>
@@ -188,7 +204,9 @@ Vastu check gives a clearer answer than general tips, especially for compact 2BH
                 <p className="mb-1 text-[10px] uppercase tracking-[0.18em] text-[#15803d]/80">
                   Facing
                 </p>
-                <p className="text-lg font-semibold text-[#15803d]">All directions</p>
+                <p className="text-lg font-semibold text-[#15803d]">
+                  All directions
+                </p>
                 <p className="mt-1 text-[12px] text-[#6b5340]">
                   East / North / West / South facing supported.
                 </p>
@@ -198,7 +216,9 @@ Vastu check gives a clearer answer than general tips, especially for compact 2BH
                 <p className="mb-1 text-[10px] uppercase tracking-[0.18em] text-[#b65c10]/80">
                   Output
                 </p>
-                <p className="text-lg font-semibold text-[#b45309]">PDF report</p>
+                <p className="text-lg font-semibold text-[#b45309]">
+                  PDF report
+                </p>
                 <p className="mt-1 text-[12px] text-[#6b5340]">
                   Room-wise verdicts + remedies you can act on.
                 </p>
@@ -228,15 +248,10 @@ Vastu check gives a clearer answer than general tips, especially for compact 2BH
               <span className="h-3 w-px bg-amber-200" />
               <span>Digital blueprint • Sharable PDF</span>
             </div>
-            <div className="flex flex-wrap items-center gap-3 pt-3 text-[11px] text-[#7a5d3a] sm:text-[12px]">
-  <span>Useful before construction or renovation</span>
-  <span className="h-3 w-px bg-amber-200" />
-  <span>Digital blueprint • Sharable PDF</span>
-</div>
-
-<p className="text-[12px] text-[#7a5d3a]">
-  Most searched: 2BHK Vastu for east-facing, north-facing & apartment layouts.
-</p>
+            <p className="text-[12px] text-[#7a5d3a]">
+              Most searched: 2BHK Vastu for east-facing, north-facing &
+              apartment layouts.
+            </p>
           </div>
 
           {/* RIGHT CARD */}
@@ -252,8 +267,12 @@ Vastu check gives a clearer answer than general tips, especially for compact 2BH
               <div className="mt-3 space-y-2 rounded-2xl border border-amber-100 bg-white/95 p-3 text-[12px] text-[#3f3a34] shadow-sm">
                 <div className="flex items-baseline justify-between gap-3">
                   <div>
-                    <p className="text-[11px] text-[#7c5b2e]">Overall Vastu score</p>
-                    <p className="mt-1 text-xl font-semibold text-[#15803d]">74 / 100</p>
+                    <p className="text-[11px] text-[#7c5b2e]">
+                      Overall Vastu score
+                    </p>
+                    <p className="mt-1 text-xl font-semibold text-[#15803d]">
+                      74 / 100
+                    </p>
                     <p className="text-[11px] text-[#166534]">
                       Strong zones, a few practical fixes suggested.
                     </p>
@@ -273,7 +292,9 @@ Vastu check gives a clearer answer than general tips, especially for compact 2BH
 
               <div className="mt-4 space-y-1 text-[11px] text-[#7c5b2e]">
                 <p>Run the same check on your real 2BHK plan in 2–3 minutes.</p>
-                <p className="font-medium text-[#166534]">Share the PDF with your architect.</p>
+                <p className="font-medium text-[#166534]">
+                  Share the PDF with your architect.
+                </p>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2 text-[11px]">
@@ -316,10 +337,11 @@ Vastu check gives a clearer answer than general tips, especially for compact 2BH
               2BHK Vastu check – what this report covers
             </h2>
             <p className="mt-2 text-[12px] leading-relaxed text-[#5a4a36] sm:text-[13px]">
-              Your 2BHK plan is mapped into Vastu zones (North, South, East, West and
-              NE/SE/SW/NW). The report highlights which placements are favourable,
-              which need attention, and suggests practical remedies—especially for
-              kitchen, bedrooms, toilets and the centre (Brahmasthan).
+              Your 2BHK plan is mapped into Vastu zones (North, South, East,
+              West and NE/SE/SW/NW). The report highlights which placements are
+              favourable, which need attention, and suggests practical
+              remedies—especially for kitchen, bedrooms, toilets and the centre
+              (Brahmasthan).
             </p>
           </div>
 
@@ -327,18 +349,8 @@ Vastu check gives a clearer answer than general tips, especially for compact 2BH
             <div>
               <h3 className="text-sm font-semibold">Common 2BHK checks</h3>
               <ul className="mt-2 space-y-1.5 text-[12px] text-[#5a4a36] sm:text-[13px]">
-              <li>
-• Kitchen zone (SE preference)
-<a href="/vastu-for-kitchen-direction" className="text-emerald-700 underline ml-1">
-(kitchen Vastu rules)
-</a>
-</li>
-<li>
-• Master bedroom zone (SW preference)
-<a href="/vastu-for-bedroom" className="text-emerald-700 underline ml-1">
-(bedroom Vastu guide)
-</a>
-</li>
+              <li>• Kitchen zone, especially South-East suitability</li>
+              <li>• Master bedroom zone, especially South-West placement</li>
                 <li>• Toilets (avoid NE; remedies if unavoidable)</li>
                 <li>• Main entrance zone</li>
                 <li>• Centre (Brahmasthan) openness</li>
@@ -358,7 +370,10 @@ Vastu check gives a clearer answer than general tips, especially for compact 2BH
           <div className="rounded-2xl border border-amber-100 bg-[#fff7ea] p-4">
             <p className="text-[12px] text-[#5a4a36] sm:text-[13px]">
               Ready to check your plan?{" "}
-              <a href="/vastu" className="font-semibold text-[#b45309] underline">
+              <a
+                href="/vastu"
+                className="font-semibold text-[#b45309] underline"
+              >
                 Upload your 2BHK floor plan here
               </a>{" "}
               and get your Vastu preview + PDF report.
@@ -367,25 +382,25 @@ Vastu check gives a clearer answer than general tips, especially for compact 2BH
         </section>
 
         <section className="mt-10 rounded-3xl border border-amber-100 bg-white px-4 py-5">
-  <h3 className="text-sm font-semibold text-[#2b1b10]">
-    Explore more Vastu guides
-  </h3>
+          <h3 className="text-sm font-semibold text-[#2b1b10]">
+            Explore more Vastu guides
+          </h3>
 
-  <div className="mt-3 grid gap-2 text-[12px] text-[#5a4a36] sm:grid-cols-2">
-    <a href="/vastu-for-flats" className="hover:underline">
-      Vastu for flats & apartments
-    </a>
-    <a href="/vastu-for-3bhk-house" className="hover:underline">
-      Vastu for 3BHK house
-    </a>
-    <a href="/vastu-for-north-facing-house" className="hover:underline">
-      North-facing house Vastu
-    </a>
-    <a href="/vastu-check-for-house-plan" className="hover:underline">
-      Vastu check by floor plan
-    </a>
-  </div>
-</section>
+          <div className="mt-3 grid gap-2 text-[12px] text-[#5a4a36] sm:grid-cols-2">
+            <a href="/vastu-for-flats" className="hover:underline">
+              Vastu for flats & apartments
+            </a>
+            <a href="/vastu-for-3bhk-house" className="hover:underline">
+              Vastu for 3BHK house
+            </a>
+            <a href="/vastu-for-north-facing-house" className="hover:underline">
+              North-facing house Vastu
+            </a>
+            <a href="/vastu-check-for-house-plan" className="hover:underline">
+              Vastu check by floor plan
+            </a>
+          </div>
+        </section>
 
         {/* FOOTER */}
         <footer className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-amber-100 pt-4 text-[11px] text-[#8b7357] sm:text-[12px]">

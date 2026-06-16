@@ -279,6 +279,77 @@ export default function VastuFor3BHKPage() {
           </div>
         </section>
 
+        <section className="mt-10 rounded-3xl border border-amber-100 bg-white px-4 py-6 shadow-sm sm:px-6">
+  <h2 className="text-base font-semibold sm:text-lg">
+    3BHK Vastu room placement guide
+  </h2>
+
+  <p className="mt-2 text-[12px] leading-relaxed text-[#5a4a36] sm:text-[13px]">
+    A 3BHK home usually has more layout complexity than a 2BHK because the third bedroom,
+    multiple toilets, larger living area and sometimes a study, balcony or utility space
+    must be balanced together. Instead of checking only one room, the full floor plan
+    should be reviewed zone by zone.
+  </p>
+
+  <div className="mt-4 overflow-hidden rounded-2xl border border-amber-100">
+    <table className="w-full text-left text-[12px] text-[#5a4a36] sm:text-[13px]">
+      <thead className="bg-[#fff7ea] text-[#2b1b10]">
+        <tr>
+          <th className="px-3 py-2">Room / Area</th>
+          <th className="px-3 py-2">Common Vastu Focus</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr className="border-t border-amber-100">
+          <td className="px-3 py-2">Master bedroom</td>
+          <td className="px-3 py-2">Usually preferred in the South-West zone.</td>
+        </tr>
+        <tr className="border-t border-amber-100">
+          <td className="px-3 py-2">Children’s bedroom</td>
+          <td className="px-3 py-2">Often checked for North-West, West or suitable secondary zones.</td>
+        </tr>
+        <tr className="border-t border-amber-100">
+          <td className="px-3 py-2">Guest bedroom</td>
+          <td className="px-3 py-2">Should not disturb master bedroom priority or centre balance.</td>
+        </tr>
+        <tr className="border-t border-amber-100">
+          <td className="px-3 py-2">Kitchen</td>
+          <td className="px-3 py-2">South-East suitability, cooking direction and relation to toilets.</td>
+        </tr>
+        <tr className="border-t border-amber-100">
+          <td className="px-3 py-2">Toilets</td>
+          <td className="px-3 py-2">Avoiding sensitive zones like North-East where possible.</td>
+        </tr>
+        <tr className="border-t border-amber-100">
+          <td className="px-3 py-2">Centre / Brahmasthan</td>
+          <td className="px-3 py-2">Should ideally stay light, open and not overloaded.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section className="mt-10 rounded-3xl border border-amber-100 bg-white px-4 py-5">
+  <h3 className="text-sm font-semibold text-[#2b1b10]">
+    Related Vastu guides
+  </h3>
+
+  <div className="mt-3 grid gap-2 text-[12px] text-[#5a4a36] sm:grid-cols-2">
+    <a href="/vastu-for-2bhk-house" className="hover:underline">
+      Vastu for 2BHK house
+    </a>
+    <a href="/vastu-for-flats" className="hover:underline">
+      Vastu for flats and apartments
+    </a>
+    <a href="/vastu-for-villas" className="hover:underline">
+      Vastu for villas
+    </a>
+    <a href="/vastu-check-for-house-plan" className="hover:underline">
+      Vastu check by floor plan
+    </a>
+  </div>
+</section>
+
         <section
           id="faq"
           className="mt-10 space-y-6 rounded-3xl border border-amber-200 bg-white/90 px-4 py-6 shadow-sm shadow-amber-100 sm:px-6"

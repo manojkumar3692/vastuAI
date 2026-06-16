@@ -79,10 +79,10 @@ export default function CancellationsRefundsPage() {
               <p className="mt-2 text-[13px] text-[#5a4a36] sm:text-[14px]">
                 you can write to us at{" "}
                 <a
-                  href="mailto:manoj.officialmail@gmail.com"
+                  href="mailto:houseofeonindia@gmail.com"
                   className="font-semibold text-emerald-700 underline underline-offset-2"
                 >
-                  manoj.officialmail@gmail.com
+                  houseofeonindia@gmail.com
                 </a>{" "}
                 with your{" "}
                 <span className="font-semibold">

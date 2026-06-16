@@ -35,10 +35,10 @@ export default function ContactPage() {
               <p className="mt-1 text-[13px] text-[#5a4a36] sm:text-[14px]">
                 Write to us at{" "}
                 <a
-                  href="mailto:manoj.officialmail@gmail.com"
+                  href="mailto:houseofeonindia@gmail.com"
                   className="font-semibold text-emerald-700 underline underline-offset-2"
                 >
-                  manoj.officialmail@gmail.com
+                  houseofeonindia@gmail.com
                 </a>{" "}
                 for:
               </p>

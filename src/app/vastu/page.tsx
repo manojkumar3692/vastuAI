@@ -1236,7 +1236,7 @@ export default function VastuPage() {
                     <div className="mt-2 text-[10px] text-[#7a6046]">
                       After selecting a room,{" "}
                       <span className="font-semibold">
-                        It gets placed in the iamge
+                      It gets placed on the image
                       </span>{" "}
                     </div>
                   </div>
