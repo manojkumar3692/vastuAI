@@ -87,10 +87,10 @@ export default function PrivacyPolicyPage() {
               <p className="mt-2 text-[#5a4a36]">
                 To request deletion, email{" "}
                 <a
-                  href="mailto:manoj.officialmail@gmail.com"
+                  href="mailto:houseofeonindia@gmail.com"
                   className="font-semibold text-emerald-700 underline underline-offset-2"
                 >
-                  manoj.officialmail@gmail.com
+                  houseofeonindia@gmail.com
                 </a>
                 .
               </p>
@@ -114,10 +114,10 @@ export default function PrivacyPolicyPage() {
               <p className="mt-1 text-[#5a4a36]">
                 For any privacy or data protection questions, write to{" "}
                 <a
-                  href="mailto:manoj.officialmail@gmail.com"
+                  href="mailto:houseofeonindia@gmail.com"
                   className="font-semibold text-emerald-700 underline underline-offset-2"
                 >
-                  manoj.officialmail@gmail.com
+                  houseofeonindia@gmail.com
                 </a>
                 .
               </p>

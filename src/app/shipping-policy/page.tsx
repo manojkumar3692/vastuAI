@@ -75,10 +75,10 @@ export default function ShippingPolicyPage() {
               <p className="mt-2 text-[13px] text-[#5a4a36] sm:text-[14px]">
                 You can email us at{" "}
                 <a
-                  href="mailto:manoj.officialmail@gmail.com"
+                  href="mailto:houseofeonindia@gmail.com"
                   className="font-semibold text-[#b05a12] underline underline-offset-2 hover:text-[#8a3f07]"
                 >
-                  manoj.officialmail@gmail.com
+                  houseofeonindia@gmail.com
                 </a>
                 . We will verify your details and help you with a fresh download
                 link or a copy of your report, wherever applicable.

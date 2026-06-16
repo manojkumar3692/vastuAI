@@ -511,6 +511,27 @@ export default function HomePage() {
           </div>
         </section>
 
+        <section className="mt-10 rounded-3xl border border-amber-100 bg-white/90 px-4 py-5">
+  <h2 className="text-base font-semibold text-amber-900">
+    Check Vastu by home type
+  </h2>
+
+  <div className="mt-3 grid gap-2 text-[13px] text-amber-800 sm:grid-cols-2">
+    <a href="/vastu-for-2bhk-house" className="hover:underline">
+      Vastu for 2BHK house plan
+    </a>
+    <a href="/vastu-for-3bhk-house" className="hover:underline">
+      Vastu for 3BHK house plan
+    </a>
+    <a href="/vastu-for-flats" className="hover:underline">
+      Vastu for flats and apartments
+    </a>
+    <a href="/vastu-for-villas" className="hover:underline">
+      Vastu for villas and independent houses
+    </a>
+  </div>
+</section>
+
         {/* SEO CONTENT – Vastu for flats & villas */}
         <section className="mt-10 grid gap-6 rounded-3xl border border-amber-100 bg-white/80 px-4 py-6 text-[13px] text-amber-900 shadow-sm shadow-amber-100 sm:grid-cols-2 sm:px-6">
           <div>
@@ -629,7 +650,6 @@ export default function HomePage() {
           </div>
         </section>
 
-{/* Explore more tools & property guides */}
 {/* Explore more tools & property guides */}
 <section className="mt-10 rounded-3xl border border-amber-100 bg-white/90 px-4 py-5">
   <h3 className="text-sm font-semibold text-amber-900">
