@@ -55,6 +55,8 @@ export default function VastuPage() {
   const [imageUrl, setImageUrl]: any = useState("");
   const [planImageDataUrl, setPlanImageDataUrl] = useState<string | null>(null);
   const [rotationDeg, setRotationDeg] = useState<number>(0);
+  const [imgAspect, setImgAspect] = useState<number | null>(null); // naturalWidth / naturalHeight of uploaded plan
+  const [isImageExpanded, setIsImageExpanded] = useState(false); // full-size viewer modal
   const [centre, setCentre] = useState<CentrePoint>({ x: 0.5, y: 0.5 });
   const [rooms, setRooms] = useState<RoomPoint[]>([]);
 
@@ -64,6 +66,8 @@ export default function VastuPage() {
 
   const isOrientationStep = currentStep === "Set Orientation";
   const imageRef = useRef<HTMLImageElement | null>(null);
+  const stepsCanvasRef = useRef<HTMLDivElement | null>(null);
+  const [canvasSize, setCanvasSize] = useState<{ w: number; h: number } | null>(null);
   const [autoDetectTriggered, setAutoDetectTriggered] = useState(false);
   const [showRoomsList, setShowRoomsList] = useState(false);
 
@@ -83,6 +87,27 @@ export default function VastuPage() {
       setStepIndex(1);
     }
   }, [imageUrl]);
+
+  // Measure the plan canvas so the compass ring (and the plan nested inside it
+  // on the orientation step) can be sized off the SMALLER of width/height.
+  // The box's aspect ratio now follows the uploaded plan (see imgAspect), so
+  // for a portrait plan the box is taller than it is wide — sizing the ring
+  // purely off width made the plan cap (which used height too) render taller
+  // than the ring itself, covering its N/S labels. Using the true min(w,h)
+  // fixes that for every plan shape.
+  useEffect(() => {
+    const el = stepsCanvasRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        const { width, height } = entry.contentRect;
+        setCanvasSize({ w: width, h: height });
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [currentStep]);
 
   const labelForType = (t: RoomType) =>
     ROOM_TYPE_OPTIONS.find((o) => o.value === t)?.label ?? "Room";
@@ -148,6 +173,19 @@ export default function VastuPage() {
 
   const clampNorm = (val: number) => Math.min(0.98, Math.max(0.02, val));
 
+  // Keep the plan viewer's box close to the real image shape (portrait plans
+  // get a taller box, wide plans get a shorter one) instead of forcing every
+  // upload into a fixed 16:9 frame. Clamped so extreme scans don't blow up
+  // the layout.
+  const clampAspect = (ratio: number) => Math.min(2.2, Math.max(0.6, ratio));
+
+  const onPlanImageLoad: React.ReactEventHandler<HTMLImageElement> = (e) => {
+    const { naturalWidth, naturalHeight } = e.currentTarget;
+    if (naturalWidth && naturalHeight) {
+      setImgAspect(naturalWidth / naturalHeight);
+    }
+  };
+
   const handleFileSelected = useCallback((file: File | null) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
@@ -174,6 +212,7 @@ export default function VastuPage() {
     setDraggingRoomId(null);
     setIsDetectingRooms(false);
     setAutoDetectTriggered(false);
+    setImgAspect(null);
   }, []);
 
   const clearImage = () => {
@@ -187,6 +226,8 @@ export default function VastuPage() {
     setIsDetectingRooms(false);
     setStepIndex(0);
     setAutoDetectTriggered(false);
+    setImgAspect(null);
+    setIsImageExpanded(false);
   };
 
   const onFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
@@ -756,9 +797,12 @@ export default function VastuPage() {
               </div>
 
               {/* White sheet with plan */}
-              <div className="relative w-full rounded-2xl border border-amber-100 bg-[#fdfaf4] px-2 py-2 sm:px-4 sm:py-4">
+              <div className="relative w-full rounded-2xl border border-amber-100 bg-[#fdfaf4] px-1.5 py-1.5 sm:px-4 sm:py-4">
                 <div className="relative mx-auto w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow">
-                  <div className="relative aspect-[16/9] w-full">
+                  <div
+                    className="relative w-full"
+                    style={{ aspectRatio: imgAspect ? clampAspect(imgAspect) : 16 / 9 }}
+                  >
                     {/* STEP 1: upload */}
                     {currentStep === "Upload Floor Plan" ? (
                       <div
@@ -800,10 +844,18 @@ export default function VastuPage() {
                               ref={imageRef}
                               src={imageUrl}
                               alt="Uploaded floor plan"
+                              onLoad={onPlanImageLoad}
                               className="absolute inset-0 m-auto max-h-full max-w-full select-none object-contain"
                             />
 
                             <div className="absolute right-3 top-3 flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setIsImageExpanded(true)}
+                                className="rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-medium text-[#5f4630] shadow-sm shadow-amber-200/70 ring-1 ring-amber-200 hover:bg-amber-50"
+                              >
+                                View full size
+                              </button>
                               <button
                                 type="button"
                                 onClick={handleChooseFileClick}
@@ -824,41 +876,64 @@ export default function VastuPage() {
                       </div>
                     ) : (
                       // STEPS 2–6: same canvas, with overlays
-                      <div className="absolute inset-0 bg-white">
-                        {/* Orientation ring */}
-                        {isOrientationStep && (
+                      <div ref={stepsCanvasRef} className="absolute inset-0 bg-white">
+                        {isOrientationStep ? (
+                          // Ring + plan sized off the SAME square (min of box
+                          // width/height) so the plan can never render bigger
+                          // than the ring's hollow centre, whatever the plan's
+                          // own aspect ratio is.
                           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-                            <img
-                              src="/orientation-img-new.png"
-                              alt="Vastu orientation ring"
-                              style={{
-                                transform: `rotate(${rotationDeg}deg)`,
-                                transformOrigin: "center center",
-                                transition: "transform 0.2s ease-out",
-                              }}
-                              className="w-[52%] max-w-[520px] object-contain"
-                              draggable={false}
-                            />
-                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/95 px-3 py-1 text-[11px] font-semibold text-[#5f4630] shadow">
-                              {rotationDeg.toFixed(1)}°
+                            <div
+                              className="relative"
+                              style={
+                                canvasSize
+                                  ? {
+                                      width: Math.min(canvasSize.w, canvasSize.h),
+                                      height: Math.min(canvasSize.w, canvasSize.h),
+                                    }
+                                  : { width: "78%", aspectRatio: 1 }
+                              }
+                            >
+                              <img
+                                src="/orientation-img-new.png"
+                                alt="Vastu orientation ring"
+                                style={{
+                                  transform: `rotate(${rotationDeg}deg)`,
+                                  transformOrigin: "center center",
+                                  transition: "transform 0.2s ease-out",
+                                }}
+                                className="absolute inset-0 h-full w-full object-contain"
+                                draggable={false}
+                              />
+                              {/* Plan nested inside the ring's hollow centre. Measured the
+                                  PNG: the coloured band only starts at ~86% of the ring's
+                                  radius, so capping the plan at 65% leaves a safe margin —
+                                  it can never grow past the ring and cover its labels. */}
+                              <img
+                                ref={imageRef}
+                                src={imageUrl!}
+                                alt="Floor plan"
+                                onLoad={onPlanImageLoad}
+                                className="absolute inset-0 m-auto max-h-[65%] max-w-[65%] select-none object-contain"
+                              />
+                              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/95 px-3 py-1 text-[11px] font-semibold text-[#5f4630] shadow">
+                                {rotationDeg.toFixed(1)}°
+                              </div>
                             </div>
                           </div>
+                        ) : (
+                          /* Plan image — fills the box (its aspect ratio already
+                             matches the plan, see imgAspect) */
+                          <div className="absolute inset-0 z-20 flex items-center justify-center">
+                            <img
+                              ref={imageRef}
+                              src={imageUrl!}
+                              alt="Floor plan"
+                              onLoad={onPlanImageLoad}
+                              className="absolute inset-0 m-auto max-h-full max-w-full select-none object-contain"
+                            />
+                          </div>
                         )}
-
-                        {/* Plan image */}
-                        <div className="absolute inset-0 z-20 flex items-center justify-center">
-                          <img
-                            ref={imageRef}
-                            src={imageUrl!}
-                            alt="Floor plan"
-                            className={
-                              "absolute inset-0 m-auto select-none object-contain " +
-                              (isOrientationStep
-                                ? "max-h-[55%] max-w-[30%]"
-                                : "max-h-full max-w-full")
-                            }
-                          />
-                        </div>
 
                         {/* Centre selection */}
                         {currentStep === "Set Centre" && (
@@ -1006,6 +1081,14 @@ export default function VastuPage() {
                         {/* <div className="pointer-events-none absolute left-3 bottom-3 z-40 rounded-full bg-[#2b1b10]/90 px-3 py-1 text-[10px] text-amber-50 shadow">
                           {currentStep} · rotation {rotationDeg.toFixed(1)}°
                         </div> */}
+
+                        <button
+                          type="button"
+                          onClick={() => setIsImageExpanded(true)}
+                          className="absolute left-3 top-3 z-40 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-medium text-[#5f4630] shadow-sm shadow-amber-200/70 ring-1 ring-amber-200 hover:bg-amber-50"
+                        >
+                          View full size
+                        </button>
 
                         <button
                           type="button"
@@ -1436,6 +1519,31 @@ export default function VastuPage() {
           </div>
         </div>
       </section>
+
+      {/* Full-size plan viewer — lets mobile users inspect the plan at real size / pinch-zoom */}
+      {isImageExpanded && imageUrl && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-3"
+          onClick={() => setIsImageExpanded(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setIsImageExpanded(false)}
+            className="absolute right-4 top-4 z-[110] rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-semibold text-[#2b1b10] shadow"
+          >
+            Close ✕
+          </button>
+          <img
+            src={imageUrl}
+            alt="Floor plan full size"
+            className="max-h-full max-w-full select-none object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/90 px-3 py-1 text-[10px] text-[#5f4630] shadow">
+            Pinch to zoom · Tap outside to close
+          </div>
+        </div>
+      )}
     </main>
   );
 }
