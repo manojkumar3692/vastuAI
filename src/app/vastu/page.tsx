@@ -68,6 +68,15 @@ export default function VastuPage() {
   const imageRef = useRef<HTMLImageElement | null>(null);
   const stepsCanvasRef = useRef<HTMLDivElement | null>(null);
   const [canvasSize, setCanvasSize] = useState<{ w: number; h: number } | null>(null);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+  const [sheetWidth, setSheetWidth] = useState<number | null>(null);
+
+  // On a wide desktop column, a portrait plan's width-derived height (box
+  // width / ratio) could grow huge and blow up the whole viewer. Cap the
+  // box's height and derive width from that instead, so it shrinks to a
+  // sensible size on desktop while still using the full column width on
+  // mobile (where this cap rarely engages).
+  const PLAN_BOX_MAX_HEIGHT_PX = 620;
   const [autoDetectTriggered, setAutoDetectTriggered] = useState(false);
   const [showRoomsList, setShowRoomsList] = useState(false);
 
@@ -108,6 +117,19 @@ export default function VastuPage() {
     ro.observe(el);
     return () => ro.disconnect();
   }, [currentStep]);
+
+  // Measure the sheet's available width (this wrapper is always mounted,
+  // regardless of step) so we can compute a height-capped box size.
+  useEffect(() => {
+    const el = sheetRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) setSheetWidth(entry.contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const labelForType = (t: RoomType) =>
     ROOM_TYPE_OPTIONS.find((o) => o.value === t)?.label ?? "Room";
@@ -798,10 +820,23 @@ export default function VastuPage() {
 
               {/* White sheet with plan */}
               <div className="relative w-full rounded-2xl border border-amber-100 bg-[#fdfaf4] px-1.5 py-1.5 sm:px-4 sm:py-4">
-                <div className="relative mx-auto w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow">
+                <div
+                  ref={sheetRef}
+                  className="relative mx-auto w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow"
+                >
                   <div
-                    className="relative w-full"
-                    style={{ aspectRatio: imgAspect ? clampAspect(imgAspect) : 16 / 9 }}
+                    className="relative mx-auto w-full"
+                    style={(() => {
+                      const ratio = imgAspect ? clampAspect(imgAspect) : 16 / 9;
+                      if (!sheetWidth) return { aspectRatio: ratio };
+                      let w = sheetWidth;
+                      let h = w / ratio;
+                      if (h > PLAN_BOX_MAX_HEIGHT_PX) {
+                        h = PLAN_BOX_MAX_HEIGHT_PX;
+                        w = h * ratio;
+                      }
+                      return { width: w, height: h };
+                    })()}
                   >
                     {/* STEP 1: upload */}
                     {currentStep === "Upload Floor Plan" ? (
