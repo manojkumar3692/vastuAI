@@ -290,6 +290,11 @@ async function buildAiReport(
 
   const response = await callOpenAiChat({
     model: "gpt-5.6-luna",
+    // Writing explanations/remedies from data we've already scored is a
+    // drafting task, not deep multi-step reasoning — low effort cuts the
+    // model's internal "thinking" time (the biggest chunk of the 30-40s
+    // wait) without asking it to skip real work.
+    reasoning_effort: "low",
     response_format: { type: "json_object" },
     messages: [
       {

@@ -78,6 +78,7 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify({
           model: "gpt-5.6-luna",
+          reasoning_effort: "low",
           response_format: { type: "json_object" },
           messages: [
             {

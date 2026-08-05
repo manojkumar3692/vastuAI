@@ -131,6 +131,10 @@ Respond with JSON only, no extra text.
     const completion = await openai.chat.completions.create(
       {
         model: "gpt-5.6-luna",
+        // This is pattern-matching against an image, not multi-step logic —
+        // low reasoning effort trims the model's internal "thinking" time
+        // without giving up meaningful accuracy on this kind of task.
+        reasoning_effort: "low",
         response_format: { type: "json_object" },
         messages: [
           {
