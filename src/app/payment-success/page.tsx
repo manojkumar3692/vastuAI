@@ -47,8 +47,10 @@ export default function PaymentSuccessPage() {
         headers: { "Content-Type": "application/json" },
         signal: abortRef.current.signal,
         body: JSON.stringify({
-          customerName: payload.customerName || "Customer",
+          customerName: payload.customerName || undefined,
           summary: payload.summary,
+          planImageDataUrl: payload.planImageDataUrl || undefined,
+          roomPoints: payload.roomPoints || undefined,
         }),
       });
 

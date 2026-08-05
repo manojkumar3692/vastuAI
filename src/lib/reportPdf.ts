@@ -1,8 +1,8 @@
 // src/lib/reportPdf.ts
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import type { VastuSummary } from "./vastuRules";
+import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage } from "pdf-lib";
+import type { VastuSummary, Verdict } from "./vastuRules";
 import type { RoomType } from "@/types/vastu";
-import { getStaticTemplateForRoom } from "./templates";
+import { getStaticTemplateForRoom, getVerdictPriority } from "./templates";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -68,6 +68,17 @@ type BuildPdfOptions = {
   customerCity?: string;
 };
 
+export type RoomPointAsset = { id: string; x: number; y: number };
+
+export type ReportAssets = {
+  /** Data URL (data:image/png;base64,... or data:image/jpeg;...) of the
+   * uploaded floor plan, already downscaled client-side for this purpose. */
+  planImageDataUrl?: string;
+  /** Normalized (0-1) x/y per room, matched by id to summary.rooms, used to
+   * plot pins on the embedded floor plan snapshot. */
+  roomPoints?: RoomPointAsset[];
+};
+
 /* -------------------------------------------------------------------------- */
 /*                               PUBLIC ENTRY                                 */
 /* -------------------------------------------------------------------------- */
@@ -80,18 +91,176 @@ export async function buildVastuReportPdf(
   summary: VastuSummary,
   customerName?: string,
   customerCity?: string,
+  assets?: ReportAssets,
 ): Promise<Uint8Array> {
   if (!OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY not configured");
   }
 
   const aiReport = await buildAiReport(summary, { customerName, customerCity });
-  return await buildPdfFromAi(summary, aiReport, { customerName, customerCity });
+  return await buildPdfFromAi(summary, aiReport, { customerName, customerCity }, assets);
+}
+
+/* -------------------------------------------------------------------------- */
+/*                        AI RESPONSE NORMALIZATION                           */
+/* -------------------------------------------------------------------------- */
+
+// The AI's JSON is asked (via prompt) to put plain strings in fields like
+// `explanation` or `nonStructuralRemedies`, but nothing enforces that at the
+// API level — a model can decide a "remedies" field is more naturally a
+// list and hand back an array (or a nested object) instead. Every one of
+// those fields eventually hits `text.split(...)` while drawing the PDF, so
+// an unexpected shape crashed the whole report generation instead of just
+// looking a little different. These coerce whatever comes back into safe,
+// renderable strings/arrays before anything touches the PDF.
+
+function toText(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) return value.map(toText).filter(Boolean).join(" ");
+  if (typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    for (const key of ["text", "summary", "value", "en", "description", "content"]) {
+      if (typeof obj[key] === "string") return obj[key] as string;
+    }
+    try {
+      return Object.values(obj).map(toText).filter(Boolean).join(" ");
+    } catch {
+      return "";
+    }
+  }
+  return String(value);
+}
+
+function toTextArray(value: unknown): string[] {
+  if (value == null) return [];
+  if (Array.isArray(value)) return value.map(toText).filter(Boolean);
+  const text = toText(value);
+  return text ? [text] : [];
+}
+
+function normalizeAiRoom(raw: unknown): AiRoomReport {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  return {
+    id: toText(r.id),
+    roomName: toText(r.roomName),
+    type: toText(r.type),
+    direction: toText(r.direction),
+    verdict: toText(r.verdict),
+    explanation: toText(r.explanation),
+    nonStructuralRemedies: toText(r.nonStructuralRemedies),
+    structuralGuidance: toText(r.structuralGuidance),
+    quickTips: toTextArray(r.quickTips),
+  };
+}
+
+function normalizeAiReport(raw: unknown): AiReport {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const overall = (r.overallSummary ?? {}) as Record<string, unknown>;
+
+  const normalized: AiReport = {
+    overallSummary: {
+      title: toText(overall.title),
+      summaryParagraph: toText(overall.summaryParagraph),
+      keyHighlights: toTextArray(overall.keyHighlights),
+      cautionPoints: toTextArray(overall.cautionPoints),
+    },
+    rooms: Array.isArray(r.rooms) ? r.rooms.map(normalizeAiRoom) : [],
+    globalTips: toTextArray(r.globalTips),
+  };
+
+  if (r.expectationFraming && typeof r.expectationFraming === "object") {
+    const e = r.expectationFraming as Record<string, unknown>;
+    normalized.expectationFraming = {
+      title: toText(e.title),
+      intro: toText(e.intro),
+      beforeAfterBullets: toTextArray(e.beforeAfterBullets),
+      realisticTimelineNote: toText(e.realisticTimelineNote),
+    };
+  }
+
+  if (r.timelineChecklist && typeof r.timelineChecklist === "object") {
+    const t = r.timelineChecklist as Record<string, unknown>;
+    normalized.timelineChecklist = {
+      title: toText(t.title),
+      intro: toText(t.intro),
+      day0to2: toTextArray(t.day0to2),
+      week1: toTextArray(t.week1),
+      week2to4: toTextArray(t.week2to4),
+      optionalIfRenovating: toTextArray(t.optionalIfRenovating),
+      closingTip: toText(t.closingTip),
+    };
+  }
+
+  if (r.architectNotes && typeof r.architectNotes === "object") {
+    const a = r.architectNotes as Record<string, unknown>;
+    normalized.architectNotes = {
+      title: toText(a.title),
+      intro: toText(a.intro),
+      inputsAssumed: toTextArray(a.inputsAssumed),
+      highPriorityAreas: toTextArray(a.highPriorityAreas),
+      renovationSuggestions: toTextArray(a.renovationSuggestions),
+      doNotChangeWithoutFeasibility: toTextArray(a.doNotChangeWithoutFeasibility),
+      closingNote: toText(a.closingNote),
+    };
+  }
+
+  return normalized;
 }
 
 /* -------------------------------------------------------------------------- */
 /*                             AI REPORT GENERATION                           */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * The report-writing call previously used a bare fetch() with no timeout and
+ * no retry — if OpenAI was slow, the request just hung until the platform's
+ * own (short, unconfigured) function timeout killed it outright, with no
+ * chance to recover. This adds a per-attempt timeout and a couple of retries
+ * on transient failures (timeout, 5xx, network error), mirroring the
+ * timeout/maxRetries already added to the detect-rooms route.
+ */
+async function callOpenAiChat(
+  body: Record<string, unknown>,
+  { timeoutMs = 50_000, retries = 2 }: { timeoutMs?: number; retries?: number } = {},
+): Promise<Response> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      // Retry on server-side/rate-limit errors; treat 4xx (other than 429)
+      // as non-retryable since retrying won't fix a bad request.
+      if (!response.ok && (response.status >= 500 || response.status === 429) && attempt < retries) {
+        lastError = new Error(`OpenAI responded ${response.status}`);
+        continue;
+      }
+
+      return response;
+    } catch (err) {
+      lastError = err;
+      if (attempt === retries) throw err;
+      // otherwise fall through and retry
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("OpenAI request failed");
+}
 
 async function buildAiReport(
   summary: VastuSummary,
@@ -119,50 +288,48 @@ async function buildAiReport(
     rooms: enrichedRooms,
   };
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4.1-mini",
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a senior Vastu consultant. You receive JSON with a home's Vastu summary and static templates. " +
-            "Return a structured JSON report with room-wise explanations and simple, practical remedies. " +
-            "Avoid suggesting demolition or major reconstruction by default; prefer non-structural fixes. " +
-            "Keep language practical and modern, suitable for Indian flats and villas. " +
-            "Do NOT make supernatural guarantees; keep expectations realistic.",
-        },
-        {
-          role: "system",
-          content:
-            "Output must be valid JSON with this shape: " +
-            "{ overallSummary: { title, summaryParagraph, keyHighlights[], cautionPoints[] }, " +
-            "rooms: [{ id, roomName, type, direction, verdict, explanation, nonStructuralRemedies, structuralGuidance, quickTips[] }], " +
-            "globalTips: string[], " +
-            "expectationFraming?: { title, intro, beforeAfterBullets[], realisticTimelineNote }, " +
-            "timelineChecklist?: { title, intro, day0to2[], week1[], week2to4[], optionalIfRenovating[], closingTip }, " +
-            "architectNotes?: { title, intro, inputsAssumed[], highPriorityAreas[], renovationSuggestions[], doNotChangeWithoutFeasibility[], closingNote } }.",
-        },
-        {
-          role: "system",
-          content:
-            "For expectationFraming: give 4–6 bullets, realistic, emotionally resonant, no medical claims. " +
-            "For timelineChecklist: keep each list 3–6 bullets max, short and actionable. " +
-            "For architectNotes: neutral tone for architect/builder; avoid shastra debates; focus on zoning/feasibility. " +
-            "If unsure, still include these sections with safe general guidance.",
-        },
-        {
-          role: "user",
-          content: JSON.stringify(payload, null, 2),
-        },
-      ],
-    }),
+  const response = await callOpenAiChat({
+    model: "gpt-5.6-luna",
+    // Writing explanations/remedies from data we've already scored is a
+    // drafting task, not deep multi-step reasoning — low effort cuts the
+    // model's internal "thinking" time (the biggest chunk of the 30-40s
+    // wait) without asking it to skip real work.
+    reasoning_effort: "low",
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a senior Vastu consultant. You receive JSON with a home's Vastu summary and static templates. " +
+          "Return a structured JSON report with room-wise explanations and simple, practical remedies. " +
+          "Avoid suggesting demolition or major reconstruction by default; prefer non-structural fixes. " +
+          "Keep language practical and modern, suitable for Indian flats and villas. " +
+          "Do NOT make supernatural guarantees; keep expectations realistic.",
+      },
+      {
+        role: "system",
+        content:
+          "Output must be valid JSON with this shape: " +
+          "{ overallSummary: { title, summaryParagraph, keyHighlights[], cautionPoints[] }, " +
+          "rooms: [{ id, roomName, type, direction, verdict, explanation, nonStructuralRemedies, structuralGuidance, quickTips[] }], " +
+          "globalTips: string[], " +
+          "expectationFraming?: { title, intro, beforeAfterBullets[], realisticTimelineNote }, " +
+          "timelineChecklist?: { title, intro, day0to2[], week1[], week2to4[], optionalIfRenovating[], closingTip }, " +
+          "architectNotes?: { title, intro, inputsAssumed[], highPriorityAreas[], renovationSuggestions[], doNotChangeWithoutFeasibility[], closingNote } }.",
+      },
+      {
+        role: "system",
+        content:
+          "For expectationFraming: give 4–6 bullets, realistic, emotionally resonant, no medical claims. " +
+          "For timelineChecklist: keep each list 3–6 bullets max, short and actionable. " +
+          "For architectNotes: neutral tone for architect/builder; avoid shastra debates; focus on zoning/feasibility. " +
+          "If unsure, still include these sections with safe general guidance.",
+      },
+      {
+        role: "user",
+        content: JSON.stringify(payload, null, 2),
+      },
+    ],
   });
 
   if (!response.ok) {
@@ -180,15 +347,92 @@ async function buildAiReport(
     throw new Error("Empty AI response");
   }
 
-  let report: AiReport;
+  let parsed: unknown;
   try {
-    report = typeof raw === "string" ? JSON.parse(raw) : raw;
+    parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
   } catch (e) {
     console.error("[buildAiReport] Failed to parse AI JSON:", e, raw);
     throw new Error("AI response was not valid JSON");
   }
 
-  return report;
+  return normalizeAiReport(parsed);
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          TEXT FITTING HELPERS                              */
+/* -------------------------------------------------------------------------- */
+
+// The AI writes the report title and each room's header line — their length
+// isn't schema-constrained, and both were previously drawn with a raw
+// page.drawText() call with no width check, so a longer-than-usual title or
+// room name would silently run off the edge of the page instead of wrapping
+// or truncating. These keep everything inside its box.
+
+function wrapTextToLines(
+  text: string,
+  font: PDFFont,
+  size: number,
+  maxWidth: number
+): string[] {
+  // Belt-and-suspenders: the AI response is normalized to plain strings
+  // before it ever reaches here (see normalizeAiReport above), but keep
+  // this defensive so a non-string slipping through some other call site
+  // degrades to empty text instead of crashing PDF generation outright.
+  const safeText = typeof text === "string" ? text : toText(text);
+  const words = safeText.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let line = "";
+
+  for (const word of words) {
+    const testLine = line ? `${line} ${word}` : word;
+    if (font.widthOfTextAtSize(testLine, size) > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = testLine;
+    }
+  }
+  if (line) lines.push(line);
+  return lines.length ? lines : [""];
+}
+
+function fitTextBlock(
+  text: string,
+  font: PDFFont,
+  size: number,
+  maxWidth: number,
+  maxLines: number
+): string[] {
+  const lines = wrapTextToLines(text, font, size, maxWidth);
+  if (lines.length <= maxLines) return lines;
+
+  const kept = lines.slice(0, maxLines);
+  const ellipsis = "…";
+  let last = kept[maxLines - 1];
+  while (
+    last.length > 0 &&
+    font.widthOfTextAtSize(last + ellipsis, size) > maxWidth
+  ) {
+    last = last.slice(0, -1).trimEnd();
+  }
+  kept[maxLines - 1] = last + ellipsis;
+  return kept;
+}
+
+function fitSingleLine(
+  text: string,
+  font: PDFFont,
+  size: number,
+  maxWidth: number
+): string {
+  const safeText = typeof text === "string" ? text : toText(text);
+  if (font.widthOfTextAtSize(safeText, size) <= maxWidth) return safeText;
+  const ellipsis = "…";
+  let result = safeText;
+  while (result.length > 0 && font.widthOfTextAtSize(result + ellipsis, size) > maxWidth) {
+    result = result.slice(0, -1);
+  }
+  return (result.trimEnd() || safeText.slice(0, 1)) + ellipsis;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -199,6 +443,7 @@ async function buildPdfFromAi(
   summary: VastuSummary,
   ai: AiReport,
   opts: BuildPdfOptions,
+  assets?: ReportAssets,
 ): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
 
@@ -223,19 +468,23 @@ async function buildPdfFromAi(
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  // Optional: floor plan embed (SAFE – only if you later send a URL)
-  const planImageUrl =
-    (summary as any).planImageUrl || (summary as any).planPreviewImageUrl;
-
-  let embeddedPlanImage: any | undefined;
-  if (planImageUrl && typeof planImageUrl === "string") {
+  // Floor plan embed — the user's actual uploaded plan (already downscaled
+  // client-side), passed straight through as a data URL rather than a
+  // fetchable URL, so it's decoded here directly.
+  let embeddedPlanImage: PDFImage | undefined;
+  const planImageDataUrl = assets?.planImageDataUrl;
+  if (planImageDataUrl && typeof planImageDataUrl === "string") {
     try {
-      const imgResp = await fetch(planImageUrl);
-      if (imgResp.ok) {
-        const imgBytes = await imgResp.arrayBuffer();
-        const lower = planImageUrl.toLowerCase();
-        if (lower.endsWith(".png")) embeddedPlanImage = await pdfDoc.embedPng(imgBytes);
-        else embeddedPlanImage = await pdfDoc.embedJpg(imgBytes);
+      const match = /^data:(image\/(png|jpe?g));base64,(.+)$/i.exec(
+        planImageDataUrl,
+      );
+      if (match) {
+        const mime = match[1].toLowerCase();
+        const base64 = match[3];
+        const bytes = Buffer.from(base64, "base64");
+        embeddedPlanImage = mime.includes("png")
+          ? await pdfDoc.embedPng(bytes)
+          : await pdfDoc.embedJpg(bytes);
       }
     } catch (e) {
       console.error("[buildPdfFromAi] Failed to embed plan image:", e);
@@ -248,24 +497,36 @@ async function buildPdfFromAi(
   // Base background
   page.drawRectangle({ x: 0, y: 0, width, height, color: pageBg });
 
+  const marginX = 50;
+
+  // Title is AI-generated free text with no length constraint — fit it to
+  // up to 2 lines instead of letting it run off the page edge, and grow the
+  // saffron band to match so the white "Prepared for" line underneath it
+  // never spills onto the (white) page background where it'd be unreadable.
+  const title = ai.overallSummary.title || "Vastu Layout Analysis Report";
+  const titleFontSize = 22;
+  const titleLineHeight = 24;
+  const titleMaxWidth = width - marginX * 2 - 60; // leave room for the mandala icon
+  const titleLines = fitTextBlock(title, fontBold, titleFontSize, titleMaxWidth, 2);
+  const bandHeight = 110 + (titleLines.length - 1) * titleLineHeight;
+
   // Saffron header band on first page
   page.drawRectangle({
     x: 0,
-    y: height - 110,
+    y: height - bandHeight,
     width,
-    height: 110,
+    height: bandHeight,
     color: theme.saffron,
   });
   // Thin gold strip
   page.drawRectangle({
     x: 0,
-    y: height - 110,
+    y: height - bandHeight,
     width,
     height: 4,
     color: theme.gold,
   });
 
-  const marginX = 50;
   const marginTop = height - 60;
   const marginBottom = 50;
   let cursorY = marginTop;
@@ -435,18 +696,18 @@ async function buildPdfFromAi(
 
   /* ------------------------------- PAGE 1 ---------------------------------- */
 
-  const title = ai.overallSummary.title || "Vastu Layout Analysis Report";
-
-  // Title inside saffron band (white)
-  page.drawText(title, {
-    x: marginX,
-    y: cursorY - 20,
-    size: 22,
-    font: fontBold,
-    color: rgb(1, 1, 1),
+  // Title inside saffron band (white) — wrapped/fitted above, band sized to match.
+  titleLines.forEach((line, i) => {
+    page.drawText(line, {
+      x: marginX,
+      y: cursorY - 20 - i * titleLineHeight,
+      size: titleFontSize,
+      font: fontBold,
+      color: rgb(1, 1, 1),
+    });
   });
 
-  cursorY -= 32;
+  cursorY -= 32 + (titleLines.length - 1) * titleLineHeight;
 
   const preparedFor = opts.customerName ? opts.customerName : "Client";
   const preparedLine = opts.customerCity ? `${preparedFor}, ${opts.customerCity}` : preparedFor;
@@ -535,9 +796,13 @@ async function buildPdfFromAi(
   /* -------- Optional floor plan card (only if image is available) --------- */
 
   if (embeddedPlanImage) {
+    const roomPoints = assets?.roomPoints ?? [];
+    const hasPins = roomPoints.length > 0;
+
     const cardWidth = width - marginX * 2;
     const maxImgWidth = cardWidth - 24;
-    const maxImgHeight = 150;
+    const maxImgHeight = 220;
+    const legendHeight = hasPins ? 16 : 0;
 
     const dims = embeddedPlanImage.scale(1);
     let imgW = dims.width;
@@ -547,7 +812,7 @@ async function buildPdfFromAi(
     imgW *= scale;
     imgH *= scale;
 
-    const cardHeight = imgH + 40;
+    const cardHeight = imgH + 40 + legendHeight;
     ensureSpace(cardHeight + 20);
 
     const cardY = cursorY - cardHeight;
@@ -571,9 +836,69 @@ async function buildPdfFromAi(
     });
 
     const imgX = marginX + (cardWidth - imgW) / 2;
-    const imgY = cardY + 12;
+    const imgY = cardY + 12 + legendHeight;
 
-    embeddedPlanImage.draw(page, { x: imgX, y: imgY, width: imgW, height: imgH });
+    // NB: pdf-lib images are drawn via page.drawImage(), not image.draw() —
+    // the latter doesn't exist and would have thrown at runtime the first
+    // time this path actually executed (it never had before, since nothing
+    // previously populated a plan image for the PDF to embed).
+    page.drawImage(embeddedPlanImage, { x: imgX, y: imgY, width: imgW, height: imgH });
+
+    // Pins — matched by id to the scored rooms, coloured by verdict, so the
+    // snapshot actually shows WHERE each room sits rather than just being a
+    // decorative picture of the plan.
+    if (hasPins) {
+      const roomsById = new Map(summary.rooms.map((r) => [r.id, r]));
+
+      roomPoints.forEach((point) => {
+        const roomInfo = roomsById.get(point.id);
+        if (!roomInfo) return;
+        if (
+          !Number.isFinite(point.x) ||
+          !Number.isFinite(point.y) ||
+          point.x < 0 ||
+          point.x > 1 ||
+          point.y < 0 ||
+          point.y > 1
+        ) {
+          return;
+        }
+
+        const priority = getVerdictPriority(roomInfo.verdict as Verdict);
+        const pinColor =
+          priority === "positive"
+            ? rgb(0.13, 0.55, 0.28)
+            : priority === "neutral"
+            ? rgb(0.83, 0.55, 0.13)
+            : priority === "warning"
+            ? rgb(0.78, 0.42, 0.1)
+            : rgb(0.75, 0.15, 0.15);
+
+        // Normalized y=0 is the top of the image; PDF y grows upward, so flip.
+        const pinX = imgX + point.x * imgW;
+        const pinY = imgY + (1 - point.y) * imgH;
+
+        page.drawCircle({
+          x: pinX,
+          y: pinY,
+          size: 3.2,
+          color: pinColor,
+          borderColor: rgb(1, 1, 1),
+          borderWidth: 0.8,
+        });
+      });
+
+      page.drawText(
+        "Pins: green = favourable  ·  amber = average  ·  orange/red = needs correction",
+        {
+          x: marginX + 12,
+          y: cardY + 6,
+          size: 7.5,
+          font: fontRegular,
+          color: subtle,
+        },
+      );
+    }
 
     cursorY = cardY - 16;
   }
@@ -588,7 +913,10 @@ async function buildPdfFromAi(
   newPage("Room-wise Vastu Guidance");
 
   ai.rooms.forEach((room) => {
-    const header = `${room.roomName || room.type} · ${room.direction} · ${room.verdict}`;
+    const rawHeader = `${room.roomName || room.type} · ${room.direction} · ${room.verdict}`;
+    // Room name is free text (user-edited or AI-labelled) — fit it to the
+    // header bar's width instead of letting long names run past the card.
+    const header = fitSingleLine(rawHeader, fontBold, 11, width - marginX * 2 - 16);
 
     ensureSpace(120, "Room-wise Vastu Guidance (contd.)");
 

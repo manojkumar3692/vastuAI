@@ -17,6 +17,13 @@ type Props = {
 
   // navigation
   onGetFullReport: () => void; // typically goNext
+
+  // personalisation + report assets, passed through to PaymentStep so the
+  // paid PDF can show the real name and the actual floor plan with pins
+  customerName: string;
+  onCustomerNameChange: (name: string) => void;
+  planImageDataUrl?: string | null;
+  roomPoints?: { id: string; x: number; y: number }[];
 };
 
 export default function VastuSummaryPanel({
@@ -27,6 +34,10 @@ export default function VastuSummaryPanel({
   visibleRooms,
   lockedRooms,
   onGetFullReport,
+  customerName,
+  onCustomerNameChange,
+  planImageDataUrl,
+  roomPoints,
 }: Props) {
   if (roomsCount === 0) {
     return (
@@ -257,9 +268,34 @@ export default function VastuSummaryPanel({
               </div>
             </div>
 
-            
+            <div className="mt-3">
+              <label
+                htmlFor="vastu-customer-name"
+                className="mb-1 block text-[10px] font-medium text-[#8b7357]"
+              >
+                Your name (shown on the PDF report)
+              </label>
+              <input
+                id="vastu-customer-name"
+                type="text"
+                value={customerName}
+                onChange={(e) => onCustomerNameChange(e.target.value)}
+                placeholder="e.g., Priya Sharma"
+                maxLength={80}
+                className="w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-[16px] sm:text-[12px] text-[#2b1b10] placeholder:text-[#c2ab8c] focus:outline-none focus:ring-1 focus:ring-amber-500"
+              />
+              <p className="mt-1 text-[9px] text-[#a58b6e]">
+                Optional — leave blank and we&apos;ll just say &quot;Client&quot; on the report.
+              </p>
+            </div>
 
-            <PaymentStep visible={true} summary={vastuSummary} />
+            <PaymentStep
+              visible={true}
+              summary={vastuSummary}
+              customerName={customerName}
+              planImageDataUrl={planImageDataUrl}
+              roomPoints={roomPoints}
+            />
             <p className="mt-1 text-center text-[10px] text-[#8b7357]">
   Used by 1,000+ homeowners • Secure PhonePe payment • Traditional Vastu rules
 </p>
