@@ -6,24 +6,47 @@ import type { VastuSummary } from "@/lib/vastuRules";
 type Props = {
   visible: boolean;
   summary: VastuSummary;
+  customerName?: string;
+  planImageDataUrl?: string | null;
+  roomPoints?: { id: string; x: number; y: number }[];
 };
 
-export default function PaymentStep({ visible, summary }: Props) {
+export default function PaymentStep({
+  visible,
+  summary,
+  customerName,
+  planImageDataUrl,
+  roomPoints,
+}: Props) {
   const razorpayFormRef = useRef<HTMLFormElement | null>(null);
 
+  // Keep the sessionStorage payload fresh (e.g. as the user types their name)
+  // WITHOUT touching the embedded Razorpay button — that's handled by its
+  // own effect below so typing doesn't re-mount/flicker the payment button.
+  useEffect(() => {
+    if (!visible) return;
+
+    sessionStorage.setItem(
+      "vastu_report_payload",
+      JSON.stringify({
+        // Leave undefined when blank so the PDF's own "Client" fallback
+        // (src/lib/reportPdf.ts) applies, instead of printing a generic
+        // "Prepared for: Customer" on every report.
+        customerName: customerName?.trim() || undefined,
+        summary,
+        planImageDataUrl: planImageDataUrl || null,
+        roomPoints: roomPoints || [],
+      })
+    );
+  }, [visible, summary, customerName, planImageDataUrl, roomPoints]);
+
+  // Mount the Razorpay "Payment Button" embed once when this step becomes
+  // visible. Intentionally does NOT depend on customerName/summary — this is
+  // the client-side Razorpay button flow, kept as-is.
   useEffect(() => {
     if (!visible) return;
     const form = razorpayFormRef.current;
     if (!form) return;
-
-    // 🔐 Save summary BEFORE Razorpay redirect
-    sessionStorage.setItem(
-      "vastu_report_payload",
-      JSON.stringify({
-        customerName: "Customer",
-        summary,
-      })
-    );
 
     // Clean slate (prevents duplicate embedded buttons)
     form.innerHTML = "";
@@ -41,7 +64,7 @@ export default function PaymentStep({ visible, summary }: Props) {
         form.innerHTML = "";
       } catch {}
     };
-  }, [visible, summary]);
+  }, [visible]);
 
   if (!visible) return null;
 

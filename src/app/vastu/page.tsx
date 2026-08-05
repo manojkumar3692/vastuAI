@@ -15,6 +15,7 @@ import type { RoomPoint, RoomType } from "@/types/vastu";
 // import PaymentStep from "@/components/vastu/PaymentStep";
 import VastuSummaryPanel from "@/components/vastu/VastuSummaryPanel";
 import { ROOM_TYPE_OPTIONS } from "@/lib/vastuRoomOptions";
+import { resizeDataUrlForDetection } from "@/lib/resizeImage";
 
 /**
  * ✅ SEO additions in this client page:
@@ -59,6 +60,14 @@ export default function VastuPage() {
   const [isImageExpanded, setIsImageExpanded] = useState(false); // full-size viewer modal
   const [centre, setCentre] = useState<CentrePoint>({ x: 0.5, y: 0.5 });
   const [rooms, setRooms] = useState<RoomPoint[]>([]);
+  const [customerName, setCustomerName] = useState<string>("");
+  // Smaller copy of the plan, used only for the "floor plan snapshot" embed
+  // in the paid PDF — keeps the sessionStorage payload (and the request to
+  // /api/generate-report) well clear of size limits vs. the full-resolution
+  // upload.
+  const [reportPlanImageDataUrl, setReportPlanImageDataUrl] = useState<
+    string | null
+  >(null);
 
   const centreOverlayRef = useRef<HTMLDivElement | null>(null);
   const roomsOverlayRef = useRef<HTMLDivElement | null>(null);
@@ -88,6 +97,20 @@ export default function VastuPage() {
     }
   }, [imageUrl]);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!planImageDataUrl) {
+      setReportPlanImageDataUrl(null);
+      return;
+    }
+    resizeDataUrlForDetection(planImageDataUrl, 1400, 0.85).then((resized) => {
+      if (!cancelled) setReportPlanImageDataUrl(resized);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [planImageDataUrl]);
+
   // Measure the plan canvas so the compass ring (and the plan nested inside it
   // on the orientation step) can be sized off the SMALLER of width/height.
   // The box's aspect ratio now follows the uploaded plan (see imgAspect), so
@@ -109,6 +132,54 @@ export default function VastuPage() {
     return () => ro.disconnect();
   }, [currentStep]);
 
+  // The plan viewer box's aspect ratio is clamped (see clampAspect below) so
+  // extreme scans don't blow up the layout. When a plan's real aspect ratio
+  // falls outside that clamp, the <img> (rendered with object-contain) no
+  // longer fills the box edge-to-edge — it's letterboxed, centred inside it.
+  // Room dots / the centre marker were being positioned as a % of the FULL
+  // box, while their x/y values are captured relative to the image's own
+  // rendered rect (via getBoundingClientRect on the <img>) — a mismatch that
+  // visibly drifts markers off the real image whenever letterboxing kicks
+  // in. This computes the image's actual content rect within the box so
+  // markers can be offset into it correctly.
+  const imgBoxPercent = useMemo(() => {
+    const fallback = { leftPct: 0, topPct: 0, widthPct: 100, heightPct: 100 };
+    if (!canvasSize || !imgAspect || canvasSize.w <= 0 || canvasSize.h <= 0) {
+      return fallback;
+    }
+
+    const containerAspect = canvasSize.w / canvasSize.h;
+
+    if (imgAspect >= containerAspect) {
+      // Image is relatively wider than the box -> constrained by width,
+      // letterboxed top/bottom.
+      const displayedHeight = canvasSize.w / imgAspect;
+      const heightPct = (displayedHeight / canvasSize.h) * 100;
+      return {
+        leftPct: 0,
+        widthPct: 100,
+        heightPct,
+        topPct: (100 - heightPct) / 2,
+      };
+    }
+
+    // Image is relatively taller than the box -> constrained by height,
+    // letterboxed left/right.
+    const displayedWidth = canvasSize.h * imgAspect;
+    const widthPct = (displayedWidth / canvasSize.w) * 100;
+    return {
+      topPct: 0,
+      heightPct: 100,
+      widthPct,
+      leftPct: (100 - widthPct) / 2,
+    };
+  }, [canvasSize, imgAspect]);
+
+  const toBoxLeftPct = (x: number) =>
+    imgBoxPercent.leftPct + x * imgBoxPercent.widthPct;
+  const toBoxTopPct = (y: number) =>
+    imgBoxPercent.topPct + y * imgBoxPercent.heightPct;
+
   const labelForType = (t: RoomType) =>
     ROOM_TYPE_OPTIONS.find((o) => o.value === t)?.label ?? "Room";
 
@@ -123,6 +194,14 @@ export default function VastuPage() {
     }));
     return evaluateVastu(withDirections);
   }, [imageUrl, rooms, centre, rotationDeg]);
+
+  // Raw normalized positions per room, matched by id to vastuSummary.rooms
+  // downstream — used to plot pins on the floor plan snapshot embedded in
+  // the paid PDF (the summary itself only carries direction, not x/y).
+  const roomPoints = useMemo(
+    () => rooms.map((r) => ({ id: r.id, x: r.x, y: r.y })),
+    [rooms]
+  );
 
   const getImageRect = () => {
     if (imageRef.current) return imageRef.current.getBoundingClientRect();
@@ -388,10 +467,14 @@ export default function VastuPage() {
 
     setIsDetectingRooms(true);
     try {
+      // Downscale before sending — the full-resolution upload is kept as-is
+      // for display/PDF, only the copy sent to the AI is resized.
+      const detectionImage = await resizeDataUrlForDetection(planImageDataUrl);
+
       const res = await fetch("/api/detect-rooms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageDataUrl: planImageDataUrl }),
+        body: JSON.stringify({ imageDataUrl: detectionImage }),
       });
 
       if (!res.ok) throw new Error("AI detection failed");
@@ -949,8 +1032,8 @@ export default function VastuPage() {
                             <div
                               className="absolute h-4 w-4 rounded-full border-2 border-amber-500 bg-white shadow shadow-amber-500/60"
                               style={{
-                                left: `${centre.x * 100}%`,
-                                top: `${centre.y * 100}%`,
+                                left: `${toBoxLeftPct(centre.x)}%`,
+                                top: `${toBoxTopPct(centre.y)}%`,
                                 transform: "translate(-50%, -50%)",
                               }}
                             >
@@ -960,8 +1043,8 @@ export default function VastuPage() {
                             <div
                               className="pointer-events-none absolute border border-dashed border-amber-400/70"
                               style={{
-                                left: `${centre.x * 100}%`,
-                                top: `${centre.y * 100}%`,
+                                left: `${toBoxLeftPct(centre.x)}%`,
+                                top: `${toBoxTopPct(centre.y)}%`,
                                 width: "72px",
                                 height: "72px",
                                 transform: "translate(-50%, -50%)",
@@ -1012,8 +1095,8 @@ export default function VastuPage() {
                                   key={room.id}
                                   className="absolute"
                                   style={{
-                                    left: `${room.x * 100}%`,
-                                    top: `${room.y * 100}%`,
+                                    left: `${toBoxLeftPct(room.x)}%`,
+                                    top: `${toBoxTopPct(room.y)}%`,
                                     transform: "translate(-50%, -50%)",
                                   }}
                                 >
@@ -1305,7 +1388,7 @@ export default function VastuPage() {
                           setPlanHint(`${labelForType(v)} added. Drag to adjust.`);
                           window.setTimeout(() => setPlanHint(""), 1200);
                         }}
-                        className="w-full rounded-md border border-amber-200 bg-white px-2 py-2 text-[11px]"
+                        className="w-full rounded-md border border-amber-200 bg-white px-2 py-2 text-[16px] sm:text-[11px]"
                       >
                         <option value="">Select a room…</option>
                         {ROOM_TYPE_OPTIONS.map((opt) => (
@@ -1406,7 +1489,7 @@ export default function VastuPage() {
                               updateRoomName(room.id, e.target.value)
                             }
                             placeholder="Room name (e.g., Master Bedroom)"
-                            className="mt-1 w-full rounded-md border border-amber-200 bg-white px-2 py-1 text-[11px] text-[#2b1b10] placeholder:text-[#b39b7e] focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            className="mt-1 w-full rounded-md border border-amber-200 bg-white px-2 py-1 text-[16px] sm:text-[11px] text-[#2b1b10] placeholder:text-[#b39b7e] focus:outline-none focus:ring-1 focus:ring-amber-500"
                           />
 
                           <select
@@ -1417,7 +1500,7 @@ export default function VastuPage() {
                                 e.target.value as RoomType
                               )
                             }
-                            className="mt-1 w-full rounded-md border border-amber-200 bg-white px-2 py-1 text-[11px] text-[#2b1b10] focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            className="mt-1 w-full rounded-md border border-amber-200 bg-white px-2 py-1 text-[16px] sm:text-[11px] text-[#2b1b10] focus:outline-none focus:ring-1 focus:ring-amber-500"
                           >
                             {ROOM_TYPE_OPTIONS.map((opt) => (
                               <option
@@ -1452,6 +1535,10 @@ export default function VastuPage() {
                   visibleRooms={visibleRooms}
                   lockedRooms={lockedRooms}
                   onGetFullReport={goNext}
+                  customerName={customerName}
+                  onCustomerNameChange={setCustomerName}
+                  planImageDataUrl={reportPlanImageDataUrl}
+                  roomPoints={roomPoints}
                 />
                 <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-2 text-[11px] text-[#2b1b10]">
   ₹99 now can prevent ₹50K+ changes later

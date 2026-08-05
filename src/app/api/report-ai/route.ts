@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
           Authorization: `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-4.1-mini", // <-- you can swap model later if needed
+          model: "gpt-5.6-luna",
           response_format: { type: "json_object" },
           messages: [
             {
