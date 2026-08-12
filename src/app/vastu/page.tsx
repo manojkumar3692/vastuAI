@@ -9,7 +9,7 @@ import React, {
   useEffect,
 } from "react";
 import Script from "next/script";
-import { directionForPoint } from "@/lib/vastuGeometry";
+import { directionForPoint, CENTRE_ZONE_RADIUS } from "@/lib/vastuGeometry";
 import { evaluateVastu, type VastuSummary } from "@/lib/vastuRules";
 import type { RoomPoint, RoomType } from "@/types/vastu";
 // import PaymentStep from "@/components/vastu/PaymentStep";
@@ -1040,13 +1040,18 @@ export default function VastuPage() {
                               <div className="m-[3px] h-1.5 w-1.5 rounded-full bg-amber-600" />
                             </div>
 
+                            {/* Brahmasthan preview — sized to the same zone
+                                vastuRules.ts actually scores against
+                                (CENTRE_ZONE_RADIUS), not a decorative fixed
+                                box, so what's shown here matches what counts
+                                as "Centre" once rooms are tagged. */}
                             <div
                               className="pointer-events-none absolute border border-dashed border-amber-400/70"
                               style={{
                                 left: `${toBoxLeftPct(centre.x)}%`,
                                 top: `${toBoxTopPct(centre.y)}%`,
-                                width: "72px",
-                                height: "72px",
+                                width: `${CENTRE_ZONE_RADIUS * 2 * imgBoxPercent.widthPct}%`,
+                                height: `${CENTRE_ZONE_RADIUS * 2 * imgBoxPercent.heightPct}%`,
                                 transform: "translate(-50%, -50%)",
                               }}
                             />
