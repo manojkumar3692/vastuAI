@@ -71,6 +71,7 @@ export const ROOM_TYPE_OPTIONS: RoomTypeOption[] = [
 
   // Structural
   { value: "staircase", label: ROOM_TYPE_LABEL.staircase, group: "Structural" },
+  { value: "lift", label: ROOM_TYPE_LABEL.lift, group: "Structural" },
   { value: "basement", label: ROOM_TYPE_LABEL.basement, group: "Structural" },
 
   // Utilities

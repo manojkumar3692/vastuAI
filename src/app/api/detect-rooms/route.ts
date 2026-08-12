@@ -13,15 +13,40 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const VALID_ROOM_TYPES = new Set<string>(
-  ROOM_TYPE_OPTIONS.map((o) => o.value)
+// Auto-detection is deliberately scoped to a core set of room types, not
+// the app's full ~50-type list. A floor plan with 15+ auto-placed pins is
+// hard to read on mobile, and most of the Vastu value is concentrated in
+// these types anyway. Everything else (terrace, study, servant room,
+// French balcony, dining, etc.) is still fully supported — it's just
+// manual-add-only via the "Add room" dropdown, which uses the full
+// ROOM_TYPE_OPTIONS list untouched.
+const CORE_AUTO_DETECT_TYPES = new Set<RoomType>([
+  "master_bedroom",
+  "bedroom",
+  "kids_room",
+  "guest_room",
+  "kitchen",
+  "toilet",
+  "bathroom",
+  "main_entrance",
+  "living",
+  "pooja",
+  "staircase",
+  "lift",
+  "balcony",
+  "store",
+  "store_room",
+]);
+
+const CORE_ROOM_TYPE_OPTIONS = ROOM_TYPE_OPTIONS.filter((o) =>
+  CORE_AUTO_DETECT_TYPES.has(o.value)
 );
 
-// Single source of truth for what the model is allowed to return — kept in
-// sync with the app's full room type list (src/lib/vastuRoomOptions.ts)
-// instead of a hand-typed subset, so newly supported room types never
-// silently fall outside what detection can produce.
-const ROOM_TYPE_REFERENCE = ROOM_TYPE_OPTIONS.map(
+const VALID_ROOM_TYPES = new Set<string>(
+  CORE_ROOM_TYPE_OPTIONS.map((o) => o.value)
+);
+
+const ROOM_TYPE_REFERENCE = CORE_ROOM_TYPE_OPTIONS.map(
   (o) => `${o.value} (${o.label})`
 ).join(", ");
 
@@ -67,10 +92,12 @@ function sanitizeRooms(raw: unknown): CleanRoom[] {
     const clampedX = Math.min(0.98, Math.max(0.02, x));
     const clampedY = Math.min(0.98, Math.max(0.02, y));
 
-    const safeType: RoomType =
-      typeof type === "string" && VALID_ROOM_TYPES.has(type)
-        ? (type as RoomType)
-        : "other";
+    // Outside the core auto-detect list (AI drift/hallucination, or plain
+    // not matching one of the scoped types) — drop it rather than falling
+    // back to a generic "other" bucket, which would reintroduce the exact
+    // clutter/confusion this scoping is meant to avoid.
+    if (typeof type !== "string" || !VALID_ROOM_TYPES.has(type)) continue;
+    const safeType = type as RoomType;
 
     const safeName =
       typeof name === "string" && name.trim() ? name.trim() : undefined;
@@ -102,14 +129,21 @@ export async function POST(req: NextRequest) {
     const prompt = `
 You are a Vastu assistant analyzing a 2D architectural floor plan image.
 
-Identify every room / labelled space you can see and return JSON with this
-structure:
+This app only auto-detects a deliberately small set of core room types —
+everything else is added manually by the user afterwards, so the plan stays
+readable on mobile instead of getting cluttered with pins. Identify ONLY
+rooms/spaces that clearly match one of these specific types, and return JSON
+with this structure:
 
 {
   "rooms": [
     { "name": "Master Bedroom", "type": "master_bedroom", "x": 0.73, "y": 0.42 }
   ]
 }
+
+Allowed types (do not invent new ones, and do not use anything outside this
+list):
+  ${ROOM_TYPE_REFERENCE}
 
 Coordinate rules:
 - "x" and "y" are NORMALIZED coordinates from 0 to 1 relative to the FULL
@@ -123,22 +157,21 @@ Coordinate rules:
   outside the built structure.
 
 Room type rules:
-- "type" MUST be exactly one of these values (do not invent new ones):
-  ${ROOM_TYPE_REFERENCE}
-- Match each room to the closest available type from the list above. For
-  example: a "Study"/"Office" maps to "study" or "home_office", a "Servant
-  Room" maps to "servant_room", a "Pooja"/"Puja" room maps to "pooja", a
-  car porch/parking bay maps to "parking".
-- If you are unsure of a room's EXACT type but can still tell roughly what
-  kind of space it is (a bedroom-like room, a balcony, a store, etc.), use
-  "other" and give it the best short name you can — don't omit it just
-  because you're unsure of the precise category.
-- If you genuinely cannot tell what a space is AND there is no text label on
-  the plan to go by — just an empty walled area you can't identify — OMIT it
-  from the response entirely. Do not invent a placeholder name like "Unknown
-  Room" or "Unlabelled Room"; a vague, unidentifiable marker confuses the
-  user more than leaving it out. Only include a room if you can give it a
-  real, specific name.
+- Match bedrooms carefully: "master_bedroom" for the largest/primary
+  bedroom (often has an attached bath, sometimes explicitly labelled).
+  Use "kids_room" or "guest_room" when the plan labels or clearly implies
+  it (e.g. twin beds/children's layout, or explicitly marked "Guest").
+  Otherwise use "bedroom" for any other regular bedroom.
+- Skip anything that does not clearly match one of the allowed types above
+  — do not force a Study, Terrace, Servant Room, Dining Room, French
+  Balcony, courtyard, etc. into the closest available category. Those are
+  intentionally left for the user to add manually.
+- Also skip non-room elements entirely: dimension text, north-arrow
+  symbols, title blocks, scale bars, legends.
+- Within the allowed types, if you genuinely cannot tell what a space is —
+  no text label and no visual clue — OMIT it rather than guessing. Do not
+  invent a placeholder name like "Unknown Room" or "Unlabelled Room"; only
+  include a room if you can give it a real, specific name.
 - "name" should be a short, human-friendly label as written or implied on
   the plan (e.g., "Bedroom 1", "Kitchen", "Common Toilet").
 

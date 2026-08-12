@@ -66,6 +66,7 @@ export type Direction =
   | "shoe_closet"
   // Structural
   | "staircase"
+  | "lift"
   | "basement"
   // Utilities
   | "utility"
