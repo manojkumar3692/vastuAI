@@ -8,7 +8,11 @@ export type Direction =
   | "S"
   | "SW"
   | "W"
-  | "NW";
+  | "NW"
+  // The Brahmasthan — the core zone at the exact centre of the plan. Not one
+  // of the 8 compass sectors; Vastu treats it as its own special zone with
+  // its own rules (generally: keep it open).
+  | "Centre";
 
   export type RoomType =
   // Bedrooms
