@@ -71,6 +71,7 @@ export const ROOM_TYPE_LABEL: Record<RoomType, string> = {
   
     // Structural
     staircase: "Staircase",
+    lift: "Lift",
     basement: "Basement",
   
     // Utilities

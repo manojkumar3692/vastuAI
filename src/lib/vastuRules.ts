@@ -93,7 +93,11 @@ function normalizeRoomType(type: RoomType): BaseRoomType {
     case "mud_room":
       return "circulation";
 
+    // Lift gets the same directional treatment as a staircase — both are
+    // "heavy" vertical-movement structural elements Vastu groups together
+    // (avoid Brahmasthan/NE, prefer S/W/SW).
     case "staircase":
+    case "lift":
       return "staircase";
 
     // heavy storage / wet-utility cluster

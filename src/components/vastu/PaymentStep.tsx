@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { VastuSummary } from "@/lib/vastuRules";
+import { resolveRegion } from "@/lib/region";
 
 type Props = {
   visible: boolean;
@@ -10,6 +11,24 @@ type Props = {
   planImageDataUrl?: string | null;
   roomPoints?: { id: string; x: number; y: number }[];
 };
+
+// Domestic (India) Razorpay Payment Button — unchanged, existing pricing.
+const BUTTON_ID_DOMESTIC = "pl_S6HHQm0InTxYG0";
+
+// International pricing button for visitors browsing from outside India
+// (NRI/foreign traffic). Price (₹499) is set on this button inside the
+// Razorpay dashboard, not here — this file only ever references the button
+// ID, so changing the price again later is a dashboard-only edit, no code
+// change needed.
+const BUTTON_ID_INTERNATIONAL = "pl_TOqlK3yEhZp1mR";
+
+function resolveButtonId(): string {
+  const region = resolveRegion();
+  if (region === "INTL") {
+    return BUTTON_ID_INTERNATIONAL;
+  }
+  return BUTTON_ID_DOMESTIC;
+}
 
 export default function PaymentStep({
   visible,
@@ -54,7 +73,7 @@ export default function PaymentStep({
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/payment-button.js";
     script.async = true;
-    script.setAttribute("data-payment_button_id", "pl_S6HHQm0InTxYG0");
+    script.setAttribute("data-payment_button_id", resolveButtonId());
 
     form.appendChild(script);
 
