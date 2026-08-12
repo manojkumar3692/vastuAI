@@ -38,6 +38,13 @@ function isFiniteNumber(n: unknown): n is number {
   return typeof n === "number" && Number.isFinite(n);
 }
 
+// Catches the AI naming a space with a vague placeholder instead of a real
+// label — "Unknown Room", "Unlabelled Room", "Unidentified Space", etc. The
+// prompt now tells it to omit these entirely rather than invent a name, but
+// this is a safety net for when it doesn't follow that instruction, so a
+// confusing, unremovable dot never reaches the user's floor plan.
+const GENERIC_UNIDENTIFIED_NAME = /\b(unknown|unlabel(l)?ed|unidentifi(ed|able)|unnamed|undetermined|not\s*(clear|identified|labell?ed))\b/i;
+
 /**
  * The model occasionally returns rooms with missing/garbled coordinates or a
  * type outside the allowed list. Previously these passed straight through to
@@ -67,6 +74,11 @@ function sanitizeRooms(raw: unknown): CleanRoom[] {
 
     const safeName =
       typeof name === "string" && name.trim() ? name.trim() : undefined;
+
+    // No usable name at all, or a vague "I couldn't identify this" name —
+    // drop it rather than showing the user an unlabeled, confusing marker
+    // they'd have to manually remove.
+    if (!safeName || GENERIC_UNIDENTIFIED_NAME.test(safeName)) continue;
 
     cleaned.push({ name: safeName, type: safeType, x: clampedX, y: clampedY });
   }
@@ -117,13 +129,18 @@ Room type rules:
   example: a "Study"/"Office" maps to "study" or "home_office", a "Servant
   Room" maps to "servant_room", a "Pooja"/"Puja" room maps to "pooja", a
   car porch/parking bay maps to "parking".
-- Do NOT skip a clearly visible, walled room just because you are unsure of
-  the exact type — use "other" rather than omitting it entirely. Only skip
-  things that are not actual rooms (dimension text, north-arrow symbols,
-  title blocks, scale bars, legends).
+- If you are unsure of a room's EXACT type but can still tell roughly what
+  kind of space it is (a bedroom-like room, a balcony, a store, etc.), use
+  "other" and give it the best short name you can — don't omit it just
+  because you're unsure of the precise category.
+- If you genuinely cannot tell what a space is AND there is no text label on
+  the plan to go by — just an empty walled area you can't identify — OMIT it
+  from the response entirely. Do not invent a placeholder name like "Unknown
+  Room" or "Unlabelled Room"; a vague, unidentifiable marker confuses the
+  user more than leaving it out. Only include a room if you can give it a
+  real, specific name.
 - "name" should be a short, human-friendly label as written or implied on
-  the plan (e.g., "Bedroom 1", "Kitchen", "Common Toilet"). If there is no
-  text label, describe it briefly (e.g., "Unlabelled Room").
+  the plan (e.g., "Bedroom 1", "Kitchen", "Common Toilet").
 
 Respond with JSON only, no extra text.
 `;

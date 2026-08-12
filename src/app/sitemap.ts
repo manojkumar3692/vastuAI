@@ -8,6 +8,9 @@ type SitemapRoute = {
     MetadataRoute.Sitemap[number]["changeFrequency"]
   >;
   priority: number;
+  // Reciprocal hreflang alternates for this URL, keyed by locale (or
+  // "x-default"). Only set on pages that actually have translated variants.
+  languages?: Record<string, string>;
 };
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -39,7 +42,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/vastu-for-west-facing-house", lastModified: "2026-03-26", changeFrequency: "monthly", priority: 0.8 },
 
     // Tier-2 property-specific buyers
-    { path: "/vastu-for-2bhk-house", lastModified: "2026-03-29", changeFrequency: "monthly", priority: 0.82 },
+    {
+      path: "/vastu-for-2bhk-house",
+      lastModified: "2026-08-12",
+      changeFrequency: "monthly",
+      priority: 0.82,
+      languages: {
+        en: "/vastu-for-2bhk-house",
+        hi: "/hi/vastu-for-2bhk-house",
+        "x-default": "/vastu-for-2bhk-house",
+      },
+    },
+    {
+      path: "/hi/vastu-for-2bhk-house",
+      lastModified: "2026-08-12",
+      changeFrequency: "monthly",
+      priority: 0.78,
+      languages: {
+        en: "/vastu-for-2bhk-house",
+        hi: "/hi/vastu-for-2bhk-house",
+        "x-default": "/vastu-for-2bhk-house",
+      },
+    },
     { path: "/vastu-for-3bhk-house", lastModified: "2026-03-26", changeFrequency: "monthly", priority: 0.82 },
     { path: "/vastu-for-apartment-plan", lastModified: "2026-03-26", changeFrequency: "monthly", priority: 0.82 },
     { path: "/vastu-for-house-before-construction", lastModified: "2026-03-26", changeFrequency: "monthly", priority: 0.82 },
@@ -60,5 +84,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(r.lastModified),
     changeFrequency: r.changeFrequency,
     priority: r.priority,
+    ...(r.languages
+      ? {
+          alternates: {
+            languages: Object.fromEntries(
+              Object.entries(r.languages).map(([locale, path]) => [
+                locale,
+                `${baseUrl}${path}`,
+              ])
+            ),
+          },
+        }
+      : {}),
   }));
 }

@@ -4,6 +4,7 @@ import React, { useMemo } from "react";
 import { ROOM_TYPE_LABEL } from "@/lib/templates";
 import type { VastuSummary } from "@/lib/vastuRules";
 import PaymentStep from "./PaymentStep";
+import { PRICING, usePricingRegion } from "@/lib/region";
 
 type Props = {
   roomsCount: number;
@@ -39,6 +40,13 @@ export default function VastuSummaryPanel({
   planImageDataUrl,
   roomPoints,
 }: Props) {
+  // Renders "IN" pricing during SSR/hydration, then the real region on the
+  // client — kept in sync with the Razorpay button PaymentStep actually
+  // mounts, since both read the same vc_region cookie set by
+  // src/middleware.ts.
+  const pricingRegion = usePricingRegion();
+  const pricing = PRICING[pricingRegion];
+
   if (roomsCount === 0) {
     return (
       <p className="text-[11px] text-rose-500">
@@ -225,10 +233,10 @@ export default function VastuSummaryPanel({
               <div className="flex flex-col items-end">
                 <div className="rounded-full bg-white px-3 py-1 text-right shadow-sm shadow-amber-200/70">
                   <div className="text-[10px] text-[#8b7357] line-through">
-                    ₹ 499
+                    {pricing.strike}
                   </div>
                   <div className="text-[18px] font-bold text-[#d97706] leading-tight">
-                    ₹ 99
+                    {pricing.price}
                   </div>
                   <div className="text-[9px] text-[#8b7357]">
                     Introductory price
@@ -307,7 +315,7 @@ export default function VastuSummaryPanel({
             Fix layout mistakes now — before they become expensive to change later.
             </h3>
             <p className="text-[11px] text-emerald-700 font-medium">
-  ₹99 now can prevent ₹50K+ changes later
+  {pricing.price} now can prevent ₹50K+ changes later
 </p>
             <p className="text-[12px] text-[#8b7357] sm:text-[13px]">
               Unlock your complete{" "}

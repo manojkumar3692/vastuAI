@@ -17,7 +17,14 @@ export const metadata: Metadata = {
     "2bhk north facing vastu",
   ],
   robots: { index: true, follow: true },
-  alternates: { canonical: "https://vastucheck.in/vastu-for-2bhk-house" },
+  alternates: {
+    canonical: "https://vastucheck.in/vastu-for-2bhk-house",
+    languages: {
+      en: "https://vastucheck.in/vastu-for-2bhk-house",
+      hi: "https://vastucheck.in/hi/vastu-for-2bhk-house",
+      "x-default": "https://vastucheck.in/vastu-for-2bhk-house",
+    },
+  },
   openGraph: {
     title: "Vastu for 2BHK House Plan | VastuCheck.in",
     description:
@@ -138,6 +145,12 @@ export default function VastuFor2BHKPage() {
               className="text-[11px] text-[#6b5340] hover:text-[#b65c10]"
             >
               Vastu for Villas
+            </a>
+            <a
+              href="/hi/vastu-for-2bhk-house"
+              className="text-[11px] text-[#6b5340] hover:text-[#b65c10]"
+            >
+              हिंदी
             </a>
             <a
               href="/contact"
