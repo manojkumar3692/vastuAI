@@ -14,6 +14,7 @@ import { evaluateVastu, type VastuSummary } from "@/lib/vastuRules";
 import type { RoomPoint, RoomType } from "@/types/vastu";
 // import PaymentStep from "@/components/vastu/PaymentStep";
 import VastuSummaryPanel from "@/components/vastu/VastuSummaryPanel";
+import ProAccountControls from "@/components/vastu/ProAccountControls";
 import { ROOM_TYPE_OPTIONS } from "@/lib/vastuRoomOptions";
 import { resizeDataUrlForDetection } from "@/lib/resizeImage";
 
@@ -702,13 +703,16 @@ export default function VastuPage() {
             </div>
           </div>
 
-          <div className="hidden flex-col items-end text-[11px] sm:flex">
-            <span className="rounded-full bg-emerald-100/80 px-3 py-0.5 text-[10px] font-medium text-emerald-800 ring-1 ring-emerald-400/60">
-              Free preview: 2 rooms · Full report ₹99
-            </span>
-            <span className="mt-1 text-[10px] text-amber-800/70">
-              We don’t store your plan • Payments handled securely
-            </span>
+          <div className="flex items-center gap-3">
+            <div className="hidden flex-col items-end text-[11px] sm:flex">
+              <span className="rounded-full bg-emerald-100/80 px-3 py-0.5 text-[10px] font-medium text-emerald-800 ring-1 ring-emerald-400/60">
+                Free preview: 2 rooms · Full report ₹99
+              </span>
+              <span className="mt-1 text-[10px] text-amber-800/70">
+                We don’t store your plan • Payments handled securely
+              </span>
+            </div>
+            <ProAccountControls tone="light" />
           </div>
         </div>
       </header>

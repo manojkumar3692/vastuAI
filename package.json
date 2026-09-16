@@ -2,13 +2,18 @@
   "name": "vastu-calculator",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:pro-payment": "node scripts/test-vastu-pro-webhook.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
     "next": "16.1.1",
     "nodemailer": "^7.0.12",
     "openai": "^6.16.0",
