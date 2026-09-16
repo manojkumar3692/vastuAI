@@ -19,6 +19,15 @@ export function validatePin(pin: string): boolean {
   return /^\d{6}$/.test(pin);
 }
 
+export function validateNewPin(pin: string): boolean {
+  if (!validatePin(pin)) return false;
+  if (/^(\d)\1{5}$/.test(pin)) return false;
+  return !new Set([
+    "123456", "654321", "012345", "543210", "111111", "000000",
+    "121212", "112233", "123123", "101010", "696969",
+  ]).has(pin);
+}
+
 export function hashPin(pin: string): string {
   const salt = crypto.randomBytes(16);
   const hash = crypto.scryptSync(pin, salt, 64);
@@ -41,6 +50,9 @@ export async function createProSession(accountId: string): Promise<string> {
   const supabase = getSupabaseAdmin();
   const token = crypto.randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 86400000);
+  // One active session per account. A fresh sign-in invalidates any copied or
+  // forgotten session cookie on another device.
+  await supabase.from("vastu_sessions").delete().eq("account_id", accountId);
   const { error } = await supabase.from("vastu_sessions").insert({
     account_id: accountId,
     token_hash: tokenHash(token),
@@ -88,6 +100,7 @@ export async function getProAccount() {
     .select("id, name, email, phone, status, credits")
     .eq("id", session.account_id)
     .maybeSingle();
-  return account || null;
+  // Disabling an account must invalidate existing sessions immediately, not
+  // only when the 30-day cookie expires.
+  return account && account.status !== "disabled" ? account : null;
 }
-

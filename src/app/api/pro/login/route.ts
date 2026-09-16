@@ -3,10 +3,19 @@ import { createProSession, normalizeIndianPhone, setProSessionCookie, validatePi
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
+const MAX_AUTH_REQUEST_BYTES = 16_384;
 
 export async function POST(req: NextRequest) {
+  if (Number(req.headers.get("content-length") || 0) > MAX_AUTH_REQUEST_BYTES) {
+    return NextResponse.json({ error: "Request is too large." }, { status: 413 });
+  }
   try {
-    const body = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = (await req.json()) as Record<string, unknown>;
+    } catch {
+      return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+    }
     const phone = normalizeIndianPhone(String(body?.phone || ""));
     const pin = String(body?.pin || "");
     if (!phone || !validatePin(pin)) {
@@ -50,4 +59,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Could not sign in. Please try again." }, { status: 500 });
   }
 }
-

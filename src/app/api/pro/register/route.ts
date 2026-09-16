@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createProSession, hashPin, normalizeIndianPhone, setProSessionCookie, validatePin } from "@/lib/proAuth";
+import { createProSession, hashPin, normalizeIndianPhone, setProSessionCookie, validateNewPin } from "@/lib/proAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
+const MAX_AUTH_REQUEST_BYTES = 16_384;
 
 export async function POST(req: NextRequest) {
+  if (Number(req.headers.get("content-length") || 0) > MAX_AUTH_REQUEST_BYTES) {
+    return NextResponse.json({ error: "Request is too large." }, { status: 413 });
+  }
   let body: Record<string, unknown>;
   try {
     body = (await req.json()) as Record<string, unknown>;
@@ -30,8 +34,8 @@ export async function POST(req: NextRequest) {
     if (!phone) {
       return NextResponse.json({ error: "Enter a valid 10-digit Indian mobile number." }, { status: 400 });
     }
-    if (!validatePin(pin)) {
-      return NextResponse.json({ error: "Your PIN must contain exactly 6 digits." }, { status: 400 });
+    if (!validateNewPin(pin)) {
+      return NextResponse.json({ error: "Choose a less predictable 6-digit PIN. Avoid repeated or sequential numbers." }, { status: 400 });
     }
 
     const supabase = getSupabaseAdmin();

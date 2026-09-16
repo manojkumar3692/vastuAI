@@ -15,16 +15,73 @@ type Body = {
   roomPoints?: { id: string; x: number; y: number }[];
 };
 
+const MAX_REQUEST_BYTES = 8_000_000;
+const MAX_PLAN_DATA_URL_LENGTH = 6_500_000;
+const MAX_ROOMS = 64;
+
+function boundedString(value: unknown, max: number) {
+  return typeof value === "string" && value.length <= max;
+}
+
+function validateReportBody(body: Body): string | null {
+  if (!body?.summary || !Array.isArray(body.summary.rooms)) return "Invalid report data.";
+  if (!Number.isFinite(body.summary.score) || body.summary.score < 0 || body.summary.score > 100) {
+    return "Invalid Vastu score.";
+  }
+  if (!boundedString(body.summary.verdict, 120)) return "Invalid report verdict.";
+  if (body.summary.rooms.length < 1 || body.summary.rooms.length > MAX_ROOMS) {
+    return `A report can contain between 1 and ${MAX_ROOMS} rooms.`;
+  }
+  for (const room of body.summary.rooms) {
+    if (
+      !room ||
+      !boundedString(room.id, 120) ||
+      !boundedString(room.name, 120) ||
+      !boundedString(room.type, 80) ||
+      !boundedString(room.direction, 8) ||
+      !boundedString(room.verdict, 40) ||
+      !boundedString(room.notes, 1_000) ||
+      !Number.isFinite(room.scoreImpact) ||
+      Math.abs(room.scoreImpact) > 100
+    ) return "Invalid room data.";
+  }
+  if (body.customerName !== undefined && !boundedString(body.customerName, 100)) return "Customer name is too long.";
+  if (body.customerCity !== undefined && !boundedString(body.customerCity, 100)) return "Customer city is too long.";
+  if (body.planImageDataUrl !== undefined) {
+    if (
+      !boundedString(body.planImageDataUrl, MAX_PLAN_DATA_URL_LENGTH) ||
+      !/^data:image\/(png|jpe?g);base64,/i.test(body.planImageDataUrl)
+    ) return "Invalid or oversized floor-plan image.";
+  }
+  if (body.roomPoints !== undefined) {
+    if (!Array.isArray(body.roomPoints) || body.roomPoints.length > MAX_ROOMS) return "Invalid room markers.";
+    for (const point of body.roomPoints) {
+      if (
+        !point ||
+        !boundedString(point.id, 120) ||
+        !Number.isFinite(point.x) ||
+        !Number.isFinite(point.y) ||
+        point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1
+      ) return "Invalid room marker coordinates.";
+    }
+  }
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   const account = await getProAccount();
   if (!account) return NextResponse.json({ error: "Sign in to use a report credit." }, { status: 401 });
 
+  const contentLength = Number(req.headers.get("content-length") || 0);
+  if (contentLength > MAX_REQUEST_BYTES) {
+    return NextResponse.json({ error: "Report request is too large." }, { status: 413 });
+  }
+
   let reportId: string | null = null;
   try {
     const body = (await req.json()) as Body;
-    if (!body?.summary || !Array.isArray(body.summary.rooms)) {
-      return NextResponse.json({ error: "Invalid report data." }, { status: 400 });
-    }
+    const validationError = validateReportBody(body);
+    if (validationError) return NextResponse.json({ error: validationError }, { status: 400 });
 
     const supabase = getSupabaseAdmin();
     const title = `${body.customerName?.trim() || "Client"} — Vastu report`;

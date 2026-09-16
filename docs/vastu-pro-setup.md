@@ -6,6 +6,10 @@ Open the Supabase SQL Editor and run:
 
 `supabase/migrations/202609160001_vastu_pro.sql`
 
+Then run the security hardening migration:
+
+`supabase/migrations/202609160002_vastu_pro_security_hardening.sql`
+
 This creates the private account, session, purchase and report tables, the
 private `vastu-reports` storage bucket, and the atomic credit functions.
 
@@ -63,7 +67,7 @@ Do not use the older `houseofeon.in` URL for this deployment.
 4. Update the webhook URL and secret in Razorpay.
 5. Deploy this project.
 6. Register a test account using a real-format Indian phone number.
-7. Complete a Razorpay test payment using the exact same number.
+7. Complete a Razorpay test payment using the exact same phone number and email.
 8. Confirm the webhook log returns HTTP 200 and the account receives 10 credits.
 9. Generate a report, confirm the balance falls to 9, and confirm the saved PDF
    downloads from My Reports.
@@ -80,10 +84,10 @@ contacting Razorpay or moving money.
 4. Keep the account on the payment step. In a second terminal run:
 
    ```bash
-   npm run test:pro-payment -- 9876543210
+   npm run test:pro-payment -- 9876543210 account@example.com
    ```
 
-   Replace the example with the same mobile number used during registration.
+   Replace the examples with the same mobile number and email used during registration.
 5. Open `http://localhost:3000/pro/payment-status` or `/my-reports`. The balance
    should be 10.
 6. Generate one complete report through `/vastu`; the balance should become 9,

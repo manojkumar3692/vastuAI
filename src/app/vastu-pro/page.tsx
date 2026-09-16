@@ -163,7 +163,7 @@ export default function VastuProPage() {
               <div aria-live="polite">
                 <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">Final step</span>
                 <h2 className="mt-4 text-2xl font-bold">Complete secure payment</h2>
-                <p className="mt-2 text-sm leading-6 text-[#735b43]">Pay ₹799 through Razorpay. Use <strong>the same mobile number</strong> as your VastuCheck account so the 10 credits can be matched automatically.</p>
+                <p className="mt-2 text-sm leading-6 text-[#735b43]">Pay ₹799 through Razorpay. Use <strong>the same mobile number and email</strong> as your VastuCheck account so the 10 credits can be matched securely and automatically.</p>
                 <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm">
                   <div className="flex justify-between"><span>10 Vastu report credits</span><strong>₹799</strong></div>
                   <div className="mt-2 flex justify-between border-t border-amber-200 pt-2 text-xs text-[#735b43]"><span>Digital delivery</span><span>₹0</span></div>

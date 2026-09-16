@@ -27,6 +27,6 @@ export const vastuProFaqs = [
   {
     question: "How are credits added after Razorpay payment?",
     answer:
-      "Use the same mobile number in your VastuCheck account and Razorpay checkout. After Razorpay confirms the successful payment, 10 credits are added automatically.",
+      "Use the same mobile number and email in your VastuCheck account and Razorpay checkout. After Razorpay confirms the successful payment, 10 credits are added automatically.",
   },
 ] as const;

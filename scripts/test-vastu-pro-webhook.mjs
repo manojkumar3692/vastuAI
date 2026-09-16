@@ -30,11 +30,12 @@ function normalizePhone(input) {
 
 const localEnv = await readLocalEnv();
 const phone = normalizePhone(process.argv[2]);
+const email = String(process.argv[3] || "").trim().toLowerCase();
 const secret = process.env.RAZORPAY_VASTU_WEBHOOK_SECRET || localEnv.RAZORPAY_VASTU_WEBHOOK_SECRET;
 const baseUrl = process.env.VASTU_TEST_BASE_URL || "http://localhost:3000";
 
-if (!phone) {
-  console.error("Usage: npm run test:pro-payment -- 9876543210");
+if (!phone || !/^\S+@\S+\.\S+$/.test(email)) {
+  console.error("Usage: npm run test:pro-payment -- 9876543210 account@example.com");
   process.exit(1);
 }
 if (!secret || secret === "your_new_secret" || secret.includes("REPLACE")) {
@@ -60,7 +61,7 @@ const payload = {
         status: "captured",
         captured: true,
         method: "upi",
-        email: "local-test@vastucheck.in",
+        email,
         contact: phone,
         notes: { plan: "vastu_pro_10" },
         created_at: Math.floor(now / 1000),
@@ -91,4 +92,3 @@ if (!response.ok) {
 const maskedPhone = `${phone.slice(0, 3)}******${phone.slice(-3)}`;
 console.log(`Simulated captured payment ${paymentId} for ${maskedPhone}.`);
 console.log(result);
-

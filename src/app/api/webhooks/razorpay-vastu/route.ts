@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     p_amount: Number(payment.amount),
     p_currency: String(payment.currency || ""),
     p_contact: contact,
-    p_email: String(payment.email || "").toLowerCase(),
+    p_email: String(payment.email || "").trim().toLowerCase(),
     p_payload: event,
   });
   if (error) {
