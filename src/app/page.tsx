@@ -1,5 +1,6 @@
 // src/app/page.tsx
 import VastuCTA from "@/components/vastu/VastuCTA";
+import ProAccountControls from "@/components/vastu/ProAccountControls";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -162,7 +163,7 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-amber-50 text-slate-800">
+    <main className="min-h-screen overflow-x-hidden bg-amber-50 text-slate-800">
       {/* soft background aura */}
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.18),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(52,211,153,0.18),_transparent_60%)]" />
 
@@ -233,6 +234,7 @@ export default function HomePage() {
               </a>
             </nav>
           </div>
+          <ProAccountControls />
         </header>
 
         {/* HERO */}
@@ -427,6 +429,34 @@ export default function HomePage() {
                   First see free preview, then decide to buy
                 </span>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* VastuCheck Pro — isolated offer; existing homepage SEO remains unchanged */}
+        <section className="mt-10 overflow-hidden rounded-3xl border border-amber-200 bg-[#2b1b10] text-amber-50 shadow-xl shadow-amber-200/40">
+          <div className="grid gap-6 px-5 py-7 sm:px-7 lg:grid-cols-[1fr_auto] lg:items-center lg:gap-10 lg:px-9 lg:py-9">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-amber-400/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[.16em] text-amber-300">
+                New · VastuCheck Pro
+              </div>
+              <h2 className="mt-4 font-display text-2xl font-semibold sm:text-3xl">
+                Comparing several homes or floor plans?
+              </h2>
+              <p className="mt-3 max-w-2xl text-[13px] leading-6 text-amber-100/80 sm:text-sm">
+                Get <strong className="text-white">10 complete online Vastu report PDFs for ₹799</strong> and keep every finished report in your private account. Ideal for home buyers, architects, interior designers and property professionals.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[11px] text-amber-100/75 sm:text-xs">
+                <span>✓ ₹79.90 per report</span>
+                <span>✓ Free re-downloads</span>
+                <span>✓ Mobile number + PIN access</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 lg:min-w-56">
+              <a href="/vastu-pro" className="inline-flex items-center justify-center rounded-xl bg-amber-400 px-5 py-3.5 text-sm font-bold text-[#2b1b10] shadow-lg transition hover:bg-amber-300">
+                Explore 10-report plan →
+              </a>
+              <span className="text-center text-[10px] text-amber-100/60">Secure payment via Razorpay</span>
             </div>
           </div>
         </section>

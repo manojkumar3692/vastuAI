@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-<<<<<<< Updated upstream
-=======
 type RequestStatus = "idle" | "pending" | "success" | "error";
 type ReportPayload = {
   customerName?: string;
@@ -12,21 +10,34 @@ type ReportPayload = {
   planImageDataUrl?: string;
   roomPoints?: unknown;
 };
-
->>>>>>> Stashed changes
 export default function PaymentSuccessPage() {
   const [msg, setMsg] = useState("Your Vastu report is downloading…");
   const [seconds, setSeconds] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [requestStatus, setRequestStatus] = useState<RequestStatus>("idle");
 
   const startedRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  /* ---------------- Timer (UI only) ---------------- */
+  /* ---------------- Live wait-time estimate ---------------- */
   useEffect(() => {
+    if (requestStatus !== "pending") return;
     const t = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(t);
-  }, []);
+  }, [requestStatus]);
+
+  /* Warn only while the report API request is still running. */
+  useEffect(() => {
+    if (requestStatus !== "pending") return;
+
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [requestStatus]);
 
   const timeLabel = useMemo(() => {
     const m = Math.floor(seconds / 60);
@@ -39,6 +50,7 @@ export default function PaymentSuccessPage() {
     const raw = sessionStorage.getItem("vastu_report_payload");
     if (!raw) {
       setMsg("Missing report data. Please go back and regenerate.");
+      setRequestStatus("error");
       return;
     }
 
@@ -47,10 +59,13 @@ export default function PaymentSuccessPage() {
       payload = JSON.parse(raw) as ReportPayload;
     } catch {
       setMsg("Invalid report data. Please go back and regenerate.");
+      setRequestStatus("error");
       return;
     }
 
     abortRef.current = new AbortController();
+    setSeconds(0);
+    setRequestStatus("pending");
 
     try {
       setMsg("Preparing your PDF report… please stay on this page.");
@@ -82,19 +97,15 @@ export default function PaymentSuccessPage() {
       setTimeout(() => URL.revokeObjectURL(url), 2000);
 
       setMsg("Download started. You may safely close this page after completion.");
-<<<<<<< Updated upstream
-    } catch (e: any) {
-      if (e?.name === "AbortError") return;
-=======
       setRequestStatus("success");
     } catch (error: unknown) {
       if (error instanceof Error && error.name === "AbortError") return;
->>>>>>> Stashed changes
 
       console.error(error);
       setMsg(
         "Could not generate the PDF. Please click ‘Refresh & Try Again’."
       );
+      setRequestStatus("error");
     } finally {
       setIsRetrying(false);
     }
@@ -118,7 +129,31 @@ export default function PaymentSuccessPage() {
     return () => abortRef.current?.abort();
   }, []);
 
-  const progressWidth = Math.min(95, 18 + seconds * 0.7); // visual only
+  const estimatedTotalSeconds = 60;
+  const estimatedRemaining = Math.max(0, estimatedTotalSeconds - seconds);
+  const progressWidth = requestStatus === "success"
+    ? 100
+    : requestStatus === "error"
+      ? 100
+      : Math.min(94, 14 + seconds * 1.3);
+
+  const stageLabel = requestStatus === "success"
+    ? "Report ready"
+    : requestStatus === "error"
+      ? "Generation stopped"
+      : seconds < 8
+        ? "Sending your floor plan securely"
+        : seconds < 30
+          ? "Building your detailed report"
+          : "Finalising your PDF";
+
+  const estimateLabel = requestStatus === "success"
+    ? `Completed in ${timeLabel}`
+    : requestStatus === "error"
+      ? "Please retry"
+      : estimatedRemaining > 0
+        ? `About ${estimatedRemaining}s remaining`
+        : "Almost ready — please keep this page open";
 
   return (
     <main className="min-h-screen bg-[#f8f4ec] text-[#2b1b10]">
@@ -138,12 +173,16 @@ export default function PaymentSuccessPage() {
                 Payment Successful ✅
               </h1>
               <p className="mt-1 text-[12px] text-[#8b7357]">
-                Please do not leave this page until your PDF download completes.
+                {requestStatus === "success"
+                  ? "Your report download has started successfully."
+                  : requestStatus === "error"
+                    ? "Your payment is safe. Please retry the report download."
+                    : "Please keep this page open while we prepare your PDF."}
               </p>
             </div>
 
             <div className="text-right">
-              <div className="text-[10px] text-[#8b7357]">Timer</div>
+              <div className="text-[10px] text-[#8b7357]">Elapsed</div>
               <div className="text-[12px] font-semibold">{timeLabel}</div>
             </div>
           </div>
@@ -151,19 +190,45 @@ export default function PaymentSuccessPage() {
           {/* Status */}
           <div className="mt-4 rounded-2xl border border-amber-200 bg-[#fff8ea] p-4">
             <p className="text-[12px] font-semibold text-[#7a4b12]">
-              Download in progress
+              {requestStatus === "success"
+                ? "Download ready"
+                : requestStatus === "error"
+                  ? "Download interrupted"
+                  : "Report generation in progress"}
             </p>
             <p className="mt-1 text-[11px] text-[#8b7357]">{msg}</p>
 
-            <div className="mt-3 h-2 rounded-full bg-amber-100 overflow-hidden">
+            <div className="mt-3 flex items-start justify-between gap-3 text-[10px]">
+              <span className="font-semibold text-[#7a4b12]">{stageLabel}</span>
+              <span className="shrink-0 text-right text-[#8b7357]">{estimateLabel}</span>
+            </div>
+
+            <div
+              className="mt-2 h-2 overflow-hidden rounded-full bg-amber-100"
+              role="progressbar"
+              aria-label="Vastu report generation progress"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(progressWidth)}
+            >
               <div
-                className="h-full bg-amber-500 rounded-full"
+                className={`h-full rounded-full transition-[width] duration-700 ${
+                  requestStatus === "success"
+                    ? "bg-emerald-500"
+                    : requestStatus === "error"
+                      ? "bg-rose-400"
+                      : "bg-amber-500"
+                }`}
                 style={{ width: `${progressWidth}%` }}
               />
             </div>
 
             <p className="mt-2 text-[10px] text-[#a58b6e]">
-              On mobile, check your browser’s Downloads folder.
+              {requestStatus === "pending"
+                ? "If you try to close or reload now, your browser will ask you to wait."
+                : requestStatus === "success"
+                  ? "On mobile, check your browser’s Downloads folder."
+                  : "You do not need to pay again—use the retry button below."}
             </p>
           </div>
 
@@ -194,10 +259,16 @@ export default function PaymentSuccessPage() {
                 setIsRetrying(true);
                 downloadPdf();
               }}
-              disabled={isRetrying}
+              disabled={isRetrying || requestStatus === "pending"}
               className="w-full rounded-xl bg-[#2b1b10] px-4 py-2 text-[12px] font-semibold text-amber-50 hover:bg-black disabled:opacity-50"
             >
-              {isRetrying ? "Retrying…" : "Refresh & Try Again"}
+              {requestStatus === "pending"
+                ? "Preparing Your Report…"
+                : isRetrying
+                  ? "Retrying…"
+                  : requestStatus === "success"
+                    ? "Download Again"
+                    : "Refresh & Try Again"}
             </button>
 
             <Link
@@ -212,8 +283,6 @@ export default function PaymentSuccessPage() {
             </p>
           </div>
         </div>
-<<<<<<< Updated upstream
-=======
 
         <section className="mt-5" aria-labelledby="borewell-offer-title">
           <p className="mb-2 px-1 text-[9px] font-bold uppercase tracking-[0.16em] text-[#8b7357]">
@@ -321,7 +390,6 @@ export default function PaymentSuccessPage() {
             </div>
           </a>
         </div>
->>>>>>> Stashed changes
       </div>
     </main>
   );
