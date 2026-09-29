@@ -23,6 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/check-vastu-online", lastModified: "2026-03-29", changeFrequency: "weekly", priority: 0.95 },
     { path: "/free-vastu-check", lastModified: "2026-03-26", changeFrequency: "weekly", priority: 0.95 },
     { path: "/vastu", lastModified: "2026-03-26", changeFrequency: "weekly", priority: 0.95 },
+    { path: "/borewell-vastu-planner", lastModified: "2026-09-30", changeFrequency: "weekly", priority: 0.92 },
     { path: "/vastu-pro", lastModified: "2026-09-16", changeFrequency: "weekly", priority: 0.9 },
 
     // Tier-1 buying intent pages
