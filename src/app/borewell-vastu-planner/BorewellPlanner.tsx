@@ -26,7 +26,26 @@ import {
 
 type ShapeName = keyof typeof SHAPES;
 type Result = ReturnType<typeof buildResult>;
+const STORAGE_KEY = "vastucheck_borewell_access_v1";
+const PRODUCT = "borewell-planner";
 const RAZORPAY_BUTTON_URL = "https://razorpay.com/payment-button/pl_ThxnHHwlYa74Jy/view";
+
+function hasLocalAccess() {
+  try {
+    const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+    return Boolean(value?.unlocked && value?.product === PRODUCT);
+  } catch {
+    return false;
+  }
+}
+
+function grantLocalAccess() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    unlocked: true,
+    product: PRODUCT,
+    unlockedAt: new Date().toISOString(),
+  }));
+}
 
 function buildResult(center: Point, borewell: Point, points: Point[], north: number) {
   const bearing = screenBearing(center, borewell);
@@ -156,7 +175,6 @@ export default function BorewellPlanner() {
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
   const [accessChecking, setAccessChecking] = useState(true);
-  const [paymentError, setPaymentError] = useState("");
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState<"draw" | "upload">("draw");
   const [shape, setShape] = useState<ShapeName>("rectangle");
@@ -174,37 +192,19 @@ export default function BorewellPlanner() {
   }, []);
 
   useEffect(() => {
-    const timer = window.setTimeout(async () => {
+    const timer = window.setTimeout(() => {
       const params = new URLSearchParams(window.location.search);
       if (params.get("rzp_return") === "1") {
-        const paymentId = params.get("razorpay_payment_id");
-        try {
-          const response = await fetch("/api/payment/borewell-access", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ paymentId }),
-          });
-          const data = (await response.json()) as { unlocked?: boolean; error?: string };
-          if (!response.ok || !data.unlocked) throw new Error(data.error || "Payment verification failed");
-          setUnlocked(true);
-          setPlannerOpen(true);
-          showToast("Payment verified — planner unlocked");
-        } catch (error) {
-          setPaymentError(error instanceof Error ? error.message : "Payment verification failed");
-          setPaymentOpen(true);
-        }
+        grantLocalAccess();
+        setUnlocked(true);
+        setPlannerOpen(true);
+        showToast("Payment received — planner unlocked");
         params.delete("rzp_return");
         params.delete("razorpay_payment_id");
         const query = params.toString();
         window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
       } else {
-        try {
-          const response = await fetch("/api/payment/borewell-access", { cache: "no-store" });
-          const data = (await response.json()) as { unlocked?: boolean };
-          setUnlocked(Boolean(data.unlocked));
-        } catch {
-          setUnlocked(false);
-        }
+        setUnlocked(hasLocalAccess());
       }
       setAccessChecking(false);
     }, 0);
@@ -373,7 +373,7 @@ export default function BorewellPlanner() {
         </section>
       )}
 
-      {paymentOpen && <div className={styles.modalBackdrop} onMouseDown={(event) => { if (event.target === event.currentTarget) setPaymentOpen(false); }}><section className={styles.sheet} role="dialog" aria-modal="true" aria-labelledby="payment-title"><button className={styles.close} onClick={() => setPaymentOpen(false)} aria-label="Close payment">×</button><span className={styles.sheetIcon}>ॐ</span><small>ONE-TIME ACCESS</small><h2 id="payment-title">Unlock Borewell Planner</h2><p>Make a one-time ₹99 payment to plan your plot, compare unlimited positions and save a shareable borewell reference.</p><div className={styles.checkoutRow}><span><b>Borewell Vastu Planner</b><small>Full interactive access</small></span><strong>₹99</strong></div>{paymentError && <p className={styles.paymentError}>{paymentError}</p>}<div className={styles.razorpay}><a className={styles.razorpayLink} href={RAZORPAY_BUTTON_URL}><span>₹99</span><b>Continue with Razorpay</b><i>›</i></a></div><div className={styles.secure}>🔒 Secure checkout powered by Razorpay</div><div className={styles.paymentProcess}><b>How access works</b><ol><li>Pay ₹99 securely through Razorpay.</li><li>After successful payment, you return here automatically.</li><li>Your payment is verified and the planner unlocks on this browser.</li></ol></div></section></div>}
+      {paymentOpen && <div className={styles.modalBackdrop} onMouseDown={(event) => { if (event.target === event.currentTarget) setPaymentOpen(false); }}><section className={styles.sheet} role="dialog" aria-modal="true" aria-labelledby="payment-title"><button className={styles.close} onClick={() => setPaymentOpen(false)} aria-label="Close payment">×</button><span className={styles.sheetIcon}>ॐ</span><small>ONE-TIME ACCESS</small><h2 id="payment-title">Unlock Borewell Planner</h2><p>Make a one-time ₹99 payment to plan your plot, compare unlimited positions and save a shareable borewell reference.</p><div className={styles.checkoutRow}><span><b>Borewell Vastu Planner</b><small>Full interactive access</small></span><strong>₹99</strong></div><div className={styles.razorpay}><a className={styles.razorpayLink} href={RAZORPAY_BUTTON_URL}><span>₹99</span><b>Continue with Razorpay</b><i>›</i></a></div><div className={styles.secure}>🔒 Secure checkout powered by Razorpay</div><div className={styles.paymentProcess}><b>How access works</b><ol><li>Pay ₹99 securely through Razorpay.</li><li>After successful payment, you return here automatically.</li><li>The planner unlocks in this browser.</li></ol></div></section></div>}
 
       {resultOpen && <div className={styles.modalBackdrop} onMouseDown={(event) => { if (event.target === event.currentTarget) setResultOpen(false); }}><section className={styles.sheet} role="dialog" aria-modal="true" aria-labelledby="result-title"><button className={styles.close} onClick={() => setResultOpen(false)} aria-label="Close result">×</button><span className={styles.success}>✓</span><small>POINT SELECTED</small><h2 id="result-title">Your borewell reference</h2><p>Share this with your site team, then confirm feasibility with groundwater and construction professionals.</p><div className={styles.ticket}><div><b>VastuCheck</b><small>Borewell Planner</small></div><strong>{result.score}<small>/100 suitability</small></strong><dl><div><dt>Direction</dt><dd>{result.direction.name}</dd></div><div><dt>Angle</dt><dd>{Math.round(result.angle)}° from North</dd></div><div><dt>Position</dt><dd>{Math.round((borewell.x / SVG_SIZE) * 100)}% right · {Math.round((borewell.y / SVG_SIZE) * 100)}% down</dd></div><div><dt>Reference</dt><dd>Plot centre</dd></div></dl><p>Vastu-based placement reference — not a groundwater detection result.</p></div><button className={styles.fullButton} onClick={share}>Share result</button><button className={styles.quietButton} onClick={() => setResultOpen(false)}>Keep exploring</button></section></div>}
 
