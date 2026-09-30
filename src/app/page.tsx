@@ -723,6 +723,12 @@ export default function HomePage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <a
+              href="/borewell-vastu-planner"
+              className="font-medium hover:text-emerald-700 underline-offset-4 hover:underline"
+            >
+              Borewell Location as per Vastu
+            </a>
+            <a
               href="/shipping-policy"
               className="hover:text-emerald-700 underline-offset-4 hover:underline"
             >
