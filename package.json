@@ -10,7 +10,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:pro-payment": "node scripts/test-vastu-pro-webhook.mjs"
+    "test:pro-payment": "node scripts/test-vastu-pro-webhook.mjs",
+    "test:plot-studio": "node scripts/test-plot-studio.mjs && node scripts/test-development-studio.mjs && node scripts/test-studio-controls.mjs && node scripts/test-studio-performance.mjs && node scripts/test-studio-connectivity.mjs && node scripts/test-studio-optimization.mjs",
+    "predev": "node scripts/sync-studio-worker.mjs",
+    "prebuild": "node scripts/sync-studio-worker.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
@@ -18,6 +21,9 @@
     "nodemailer": "^10.0.10",
     "openai": "^6.16.0",
     "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.3.289",
+    "polyclip-ts": "^0.16.8",
+    "polygon-clipping": "^0.15.7",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },

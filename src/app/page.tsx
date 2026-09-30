@@ -183,7 +183,7 @@ export default function HomePage() {
 
       <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-10 pt-6 sm:px-6 lg:px-8">
         {/* NAVBAR */}
-        <header className="flex items-center justify-between gap-4 py-2">
+        <header className="flex flex-wrap items-center justify-between gap-4 py-2">
           <div className="flex items-center gap-3">
             {/* Logo mark – simple mandala / sun */}
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-300 via-orange-300 to-emerald-200 shadow-md shadow-amber-300/60">
@@ -234,6 +234,14 @@ export default function HomePage() {
               </a>
             </nav>
           </div>
+          <details className="relative shrink-0 text-xs text-emerald-900">
+            <summary className="cursor-pointer rounded-lg border border-emerald-200 bg-white/80 px-3 py-2">Products ⌄</summary>
+            <nav className="absolute right-0 z-50 mt-2 w-52 rounded-xl border border-emerald-100 bg-white p-2 shadow-xl" aria-label="Products">
+              <a className="block rounded-lg px-3 py-3 hover:bg-emerald-50" href="/vastu">Vastu Check</a>
+              <a className="block rounded-lg px-3 py-3 hover:bg-emerald-50" href="/borewell-vastu-planner">Borewell Planner</a>
+              <a className="block rounded-lg px-3 py-3 font-semibold hover:bg-emerald-50" href="/developer-studio">Plot Studio <span className="ml-2 text-[10px] text-emerald-600">FREE</span></a>
+            </nav>
+          </details>
           <ProAccountControls />
         </header>
 
