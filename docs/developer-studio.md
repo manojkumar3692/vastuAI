@@ -92,3 +92,16 @@ Road widths use measured full-width clipped runs instead of parcel bounding dime
 Cost/profit objectives invalidate the background search when financial inputs affect ranking. Area/mix objectives retain cheap repricing. The worker remains cancelable and numeric fields commit on blur/Enter. Blank projects default to automatic park placement; saved explicit park preferences are preserved.
 
 Validation: `scripts/test-studio-optimization.mjs` exercises selected sizes, strict mode, minimum counts, automatic candidate search, short-street widths, objective ranking and backup validation. Financial/cache tests cover cost-objective invalidation.
+
+
+## Site intelligence and live design-to-deal model
+
+After confirming entrances, **Review site constraints** opens a parcel classification workspace. Draw, move or resize conservative rectangular water, structure, HT-line, setback, no-build, reserved and uncertain envelopes. Add evidence and team verification. Union/intersection/difference operations clip all areas to the parcel and account for overlaps once, with uncertain > restricted > reserved precedence. Unverified legacy constraints remain uncertain. Potentially buildable area excludes mapped conditions but precedes roads and statutory reservations. Entrance edges indicate road frontage; primary entrance selection is explicit. Constraints are withheld from plot packing and conflicting roads remain failed checks. Site analysis pauses the layout worker while mapping.
+
+The layout screen includes the live deal dock, with saleable area, plot count, revenue, infrastructure, profit, margin, total cost and residual land budget from the shared pro forma. Pin a comparison to see changes against a persisted baseline. Price/cost inputs commit on blur or Enter; geometry runs asynchronously with explicit pending state. Adjust main road enables a draggable, keyboard-accessible spine position; release regenerates candidates, and Auto-position main road restores the search. This does not support arbitrary individual road-segment editing.
+
+Import assumptions accepts the downloadable two-column CSV template (assumption,value), including Excel-exported CSV. Preview and confirm before applying. Unknown, duplicate, non-numeric, out-of-range and formula inputs are rejected. Arbitrary XLSX models/formulas are not imported. Pinning a baseline does not trigger geometry work. Backups preserve evidence, classifications, spine override and financial comparison.
+
+Live flood/soil/terrain/utility datasets and automatically verified legal boundary classification are not connected. The SiteIntelligenceProvider interface isolates future integrations. Regulatory baselines still require authority/consultant verification; team verification is not statutory approval. Terrain/cut-fill remain earlier indicative assumptions.
+
+Validation: scripts/test-studio-live-deal.mjs covers overlap accounting, conservative classification, CSV validation, geometry changes, financial identities, exclusion clipping and backup validation.

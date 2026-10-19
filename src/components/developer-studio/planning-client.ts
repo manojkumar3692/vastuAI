@@ -23,9 +23,9 @@ export function planningJob<T extends Concept[]|TargetSolution[]>(project:Projec
   worker.postMessage({project,mode});
  });
 }
-export function useLayoutCalculation(project:Project){
+export function useLayoutCalculation(project:Project,enabled=true){
  const [revision,setRevision]=useState(0);
- const key=JSON.stringify({version:4,revision,input:geometryInput(project)}),hasBoundary=project.boundary.length>0;
+ const key=JSON.stringify({version:5,revision,input:geometryInput(project)}),hasBoundary=enabled&&project.boundary.length>0;
  const [completed,setCompleted]=useState<{key:string;concepts:Concept[];error:string}>({key:'',concepts:[],error:''});
  useEffect(()=>{
   if(!hasBoundary)return;

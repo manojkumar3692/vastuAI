@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:pro-payment": "node scripts/test-vastu-pro-webhook.mjs",
-    "test:plot-studio": "node scripts/test-plot-studio.mjs && node scripts/test-development-studio.mjs && node scripts/test-studio-controls.mjs && node scripts/test-studio-performance.mjs && node scripts/test-studio-connectivity.mjs && node scripts/test-studio-optimization.mjs",
+    "test:plot-studio": "node scripts/test-plot-studio.mjs && node scripts/test-development-studio.mjs && node scripts/test-studio-controls.mjs && node scripts/test-studio-performance.mjs && node scripts/test-studio-connectivity.mjs && node scripts/test-studio-optimization.mjs && node scripts/test-studio-live-deal.mjs",
     "predev": "node scripts/sync-studio-worker.mjs",
     "prebuild": "node scripts/sync-studio-worker.mjs"
   },
