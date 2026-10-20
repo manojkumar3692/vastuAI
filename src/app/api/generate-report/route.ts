@@ -4,11 +4,8 @@ import type { VastuSummary } from "@/lib/vastuRules";
 import { buildVastuReportPdf } from "@/lib/reportPdf";
 
 export const runtime = "nodejs";
-// The AI report-writing call + PDF assembly can take well past a short
-// default serverless timeout, especially for layouts with many rooms —
-// without this the function gets killed mid-generation and the user just
-// sees a failure after a long wait. Mirrors the same fix on detect-rooms.
-export const maxDuration = 60;
+// Allow two 120-second AI attempts plus time for PDF assembly.
+export const maxDuration = 300;
 
 type RoomPointPayload = { id: string; x: number; y: number };
 

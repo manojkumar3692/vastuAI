@@ -5,7 +5,8 @@ import { getProAccount } from "@/lib/proAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+// Allow two 120-second AI attempts plus PDF assembly and report storage.
+export const maxDuration = 300;
 
 type Body = {
   customerName?: string;

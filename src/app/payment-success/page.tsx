@@ -81,7 +81,10 @@ export default function PaymentSuccessPage() {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to generate report");
+      if (!res.ok) {
+        const failure = await res.json().catch(() => null);
+        throw new Error(failure?.detail || failure?.error || "Failed to generate report");
+      }
 
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -103,7 +106,7 @@ export default function PaymentSuccessPage() {
 
       console.error(error);
       setMsg(
-        "Could not generate the PDF. Please click ‘Refresh & Try Again’."
+        `${error instanceof Error ? error.message : "Could not generate the PDF."} Please click ‘Refresh & Try Again’.`
       );
       setRequestStatus("error");
     } finally {
@@ -113,20 +116,22 @@ export default function PaymentSuccessPage() {
 
   /* ---------------- Auto-run once on page load ---------------- */
   useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
-     // 🔥 TRACK PURCHASE EVENT
-  if (typeof window !== "undefined" && window.fbq) {
-    window.fbq("track", "Purchase", {
-      value: 99,
-      currency: "INR",
-    });
-  }
-    downloadPdf();
+    // Defer starting until after React's development effect replay. Its
+    // first cleanup cancels this timer instead of aborting a live request
+    // while leaving startedRef set, which previously prevented any download.
+    const startTimer = window.setTimeout(() => {
+      if (startedRef.current) return;
+      startedRef.current = true;
+      if (window.fbq) {
+        window.fbq("track", "Purchase", { value: 99, currency: "INR" });
+      }
+      void downloadPdf();
+    }, 0);
 
-    
-
-    return () => abortRef.current?.abort();
+    return () => {
+      window.clearTimeout(startTimer);
+      abortRef.current?.abort();
+    };
   }, []);
 
   const estimatedTotalSeconds = 60;

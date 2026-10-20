@@ -217,13 +217,13 @@ function normalizeAiReport(raw: unknown): AiReport {
  * The report-writing call previously used a bare fetch() with no timeout and
  * no retry — if OpenAI was slow, the request just hung until the platform's
  * own (short, unconfigured) function timeout killed it outright, with no
- * chance to recover. This adds a per-attempt timeout and a couple of retries
- * on transient failures (timeout, 5xx, network error), mirroring the
- * timeout/maxRetries already added to the detect-rooms route.
+ * chance to recover. Allow two minutes per attempt and one retry
+ * on transient failures (timeout, 5xx, network error)
+ * within the report routes' five-minute budget, leaving time for PDF assembly.
  */
 async function callOpenAiChat(
   body: Record<string, unknown>,
-  { timeoutMs = 50_000, retries = 2 }: { timeoutMs?: number; retries?: number } = {},
+  { timeoutMs = 120_000, retries = 1 }: { timeoutMs?: number; retries?: number } = {},
 ): Promise<Response> {
   let lastError: unknown;
 
